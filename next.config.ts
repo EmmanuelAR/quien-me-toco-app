@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // la app lee la chain desde el navegador y casi todo es dinámico:
   // el modelo clásico (sin cache components) es más simple para este caso.
   cacheComponents: false,
+  experimental: {
+    // con la caché que vercel restaura entre deploys, el css de tailwind salía de un build viejo
+    turbopackFileSystemCacheForBuild: false,
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   turbopack: {
