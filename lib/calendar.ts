@@ -1,3 +1,4 @@
+import { copy } from "@/lib/copy/es-CR";
 import { formatBudget } from "./format";
 
 /** evento de calendario del intercambio: .ics y link a google calendar */
@@ -38,9 +39,9 @@ function fold(line: string): string {
 }
 
 export function describeEvent(e: CalendarEvent): string {
-  const lines = [`intercambio de regalos: ${e.name}`, `presupuesto: ${formatBudget(e.budgetMin, e.budgetMax, e.currency)}`];
-  if (e.place) lines.push(`lugar: ${e.place}`);
-  lines.push(`¿quién me tocó?: ${e.url}`);
+  const lines = [`Intercambio de regalos: ${e.name}`, `Presupuesto: ${formatBudget(e.budgetMin, e.budgetMax, e.currency)}`];
+  if (e.place) lines.push(`Lugar: ${e.place}`);
+  lines.push(`En la app: ${e.url}`);
   return lines.join("\n");
 }
 
@@ -58,14 +59,14 @@ export function buildIcs(e: CalendarEvent, now = new Date()): string {
     `DTSTAMP:${icsDate(Math.floor(now.getTime() / 1000))}`,
     `DTSTART:${icsDate(start)}`,
     `DTEND:${icsDate(end)}`,
-    `SUMMARY:${escapeIcs(`intercambio: ${e.name}`)}`,
+    `SUMMARY:${escapeIcs(copy.calendar.summary(e.name))}`,
     `DESCRIPTION:${escapeIcs(describeEvent(e))}`,
     ...(e.place ? [`LOCATION:${escapeIcs(e.place)}`] : []),
     `URL:${e.url}`,
     "BEGIN:VALARM",
     "TRIGGER:-P1D",
     "ACTION:DISPLAY",
-    `DESCRIPTION:${escapeIcs("mañana es el intercambio. ¿ya tenés el regalo?")}`,
+    `DESCRIPTION:${escapeIcs("Mañana es el intercambio. ¿Ya tenés el regalo?")}`,
     "END:VALARM",
     "END:VEVENT",
     "END:VCALENDAR",
@@ -78,7 +79,7 @@ export function googleCalendarUrl(e: CalendarEvent): string {
   const end = icsDate(e.eventAt + (e.durationMinutes ?? 120) * 60);
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: `intercambio: ${e.name}`,
+    text: copy.calendar.summary(e.name),
     dates: `${start}/${end}`,
     details: describeEvent(e),
     ...(e.place ? { location: e.place } : {}),

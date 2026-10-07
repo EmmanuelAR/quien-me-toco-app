@@ -8,7 +8,6 @@ import { useWrite } from "@/components/cavos/useWrite";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
 import { Button } from "@/components/ui/Button";
 import { Field, TextArea } from "@/components/ui/Field";
-import { Marker } from "@/components/ui/Marker";
 import { useToast } from "@/components/ui/Toast";
 import { calls, newInviteCode } from "@/lib/contract/calls";
 import { readGroupSafe, readGroupsOfAdmin } from "@/lib/contract/reads";
@@ -20,7 +19,6 @@ interface FormState {
   name: string;
   when: string;
   place: string;
-  budgetMin: string;
   budgetMax: string;
   expected: string;
   rules: string;
@@ -50,7 +48,6 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     name: "",
     when: defaultWhen(),
     place: "",
-    budgetMin: "5000",
     budgetMax: "10000",
     expected: "6",
     rules: "",
@@ -67,7 +64,6 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
         name: g.name,
         when: nextYear(g.eventAt),
         place: g.place,
-        budgetMin: String(g.budgetMin),
         budgetMax: String(g.budgetMax),
         expected: String(g.expectedCount),
         rules: g.rules,
@@ -84,9 +80,8 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     if (!form.name.trim()) next.name = copy.create.errors.name;
     const eventAt = fromDatetimeLocalValue(form.when);
     if (!Number.isFinite(eventAt) || eventAt * 1000 < Date.now()) next.when = copy.create.errors.date;
-    const min = Number(form.budgetMin);
     const max = Number(form.budgetMax);
-    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min || min < 0) next.budgetMax = copy.create.errors.budget;
+    if (!Number.isInteger(max) || max < 1) next.budgetMax = copy.create.errors.budget;
     const expected = Number(form.expected);
     if (!Number.isInteger(expected) || expected < 3) next.expected = copy.create.errors.expected;
     setErrors(next);
@@ -111,7 +106,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
               name: form.name.trim(),
               eventAt,
               place: form.place.trim(),
-              budgetMin: Number(form.budgetMin),
+              budgetMin: Number(form.budgetMax),
               budgetMax: Number(form.budgetMax),
               rules: form.rules.trim(),
               expectedCount: Number(form.expected),
@@ -131,8 +126,8 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
         const changed =
           form.name.trim() !== previous.name ||
           form.place.trim() !== previous.place ||
-          Number(form.budgetMin) !== previous.budgetMin ||
           Number(form.budgetMax) !== previous.budgetMax ||
+          Number(form.budgetMax) !== previous.budgetMin ||
           form.rules.trim() !== previous.rules;
         if (changed) {
           await write(
@@ -140,17 +135,17 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
               name: form.name.trim(),
               eventAt,
               place: form.place.trim(),
-              budgetMin: Number(form.budgetMin),
+              budgetMin: Number(form.budgetMax),
               budgetMax: Number(form.budgetMax),
               rules: form.rules.trim(),
             }),
           );
         }
       }
-      toast.show(copy.create.created, "blue");
+      toast.show(copy.create.created, "ok");
       router.replace(`/g/${newId.toString()}/admin?nuevo=1`);
     } catch (err) {
-      toast.show(err instanceof Error && /rejected|cancel/i.test(err.message) ? copy.common.error : copy.common.error, "pink");
+      toast.show(err instanceof Error && /rejected|cancel/i.test(err.message) ? copy.common.error : copy.common.error, "error");
     }
   };
 
@@ -159,12 +154,8 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
   return (
     <Page>
       <AppHeader backHref="/" title={title} />
-      {isRepeat && previous && (
-        <p className="mb-4 text-sm text-ink-soft">
-          <Marker tone="pink">{copy.create.avoidPrevious}</Marker> viene activada; la podés apagar en el panel.
-        </p>
-      )}
-      <form className="space-y-5 pb-8" onSubmit={(e) => void submit(e)} noValidate>
+      {isRepeat && previous && <p className="-mt-4 mb-10 text-sm text-pretty text-ink-soft">{copy.create.avoidPreviousOn}</p>}
+      <form className="space-y-6 pb-12" onSubmit={(e) => void submit(e)} noValidate>
         <Field
           label={copy.create.name}
           placeholder={copy.create.namePlaceholder}
@@ -175,7 +166,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
           required
         />
         <Field
-          label={`${copy.create.date} ${copy.common.and} ${copy.create.time}`}
+          label={copy.create.when}
           type="datetime-local"
           value={form.when}
           onChange={set("when")}
@@ -183,19 +174,17 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
           required
         />
         <Field label={copy.create.place} placeholder={copy.create.placePlaceholder} value={form.place} onChange={set("place")} maxLength={80} />
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={copy.create.budgetMin} type="number" inputMode="numeric" min={0} value={form.budgetMin} onChange={set("budgetMin")} />
-          <Field
-            label={copy.create.budgetMax}
-            type="number"
-            inputMode="numeric"
-            min={0}
-            value={form.budgetMax}
-            onChange={set("budgetMax")}
-            error={errors.budgetMax}
-            hint={!errors.budgetMax ? copy.create.budgetHint : undefined}
-          />
-        </div>
+        <Field
+          label={copy.create.budgetMax}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={form.budgetMax}
+          onChange={set("budgetMax")}
+          error={errors.budgetMax}
+          hint={!errors.budgetMax ? copy.create.budgetHint : undefined}
+        />
         <Field
           label={copy.create.expected}
           type="number"
@@ -210,7 +199,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
         />
         <TextArea label={copy.create.rules} placeholder={copy.create.rulesPlaceholder} value={form.rules} onChange={set("rules")} rows={2} maxLength={400} />
 
-        <Button type="submit" size="lg" fullWidth loading={busy || isLoading}>
+        <Button type="submit" size="lg" fullWidth loading={busy || (isLoading && !isAuthenticated)}>
           {busy ? (status === "pending" ? copy.common.txPending : copy.create.submitting) : isAuthenticated ? copy.create.submit : copy.auth.enter}
         </Button>
       </form>

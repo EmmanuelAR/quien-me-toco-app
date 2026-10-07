@@ -1,8 +1,7 @@
-import { Pill } from "@/components/ui/Pill";
-import { Marker } from "@/components/ui/Marker";
 import { GroupStatus, type Group } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
-import { formatBudget, formatDate } from "@/lib/format";
+import { capitalize, formatBudget, formatDate } from "@/lib/format";
+import { cn } from "@/lib/cn";
 
 export function statusLabel(status: Group["status"]): string {
   switch (status) {
@@ -21,41 +20,65 @@ export function statusLabel(status: Group["status"]): string {
   }
 }
 
-export function StatusPill({ status }: { status: Group["status"] }) {
-  const tone = status === GroupStatus.Revealed ? "pink" : status >= GroupStatus.Drawn ? "blue" : "neutral";
+/** los cuatro pasos que se ven; "sorteando…" y "revelando…" ocupan el lugar del paso que viene */
+const STEPS = [GroupStatus.Open, GroupStatus.Closed, GroupStatus.Drawn, GroupStatus.Revealed] as const;
+
+function currentStep(status: Group["status"]): number {
+  if (status >= GroupStatus.RevealRequested) return 3;
+  if (status >= GroupStatus.DrawRequested) return 2;
+  return status === GroupStatus.Closed ? 1 : 0;
+}
+
+/** en qué va el grupo. compact: solo las rayitas y el paso actual, para las listas */
+export function GroupProgress({ status, compact = false }: { status: Group["status"]; compact?: boolean }) {
+  const current = currentStep(status);
+  const bar = (i: number) => cn("rounded-pill", i <= current ? "bg-ink" : "bg-line");
+
+  if (compact) {
+    return (
+      <span className="inline-flex items-center gap-2.5">
+        <span className="flex gap-1" aria-hidden="true">
+          {STEPS.map((step, i) => (
+            <span key={step} className={cn("h-1 w-4", bar(i))} />
+          ))}
+        </span>
+        <span className="text-sm text-ink-soft">{statusLabel(status)}</span>
+      </span>
+    );
+  }
+
   return (
-    <Pill tone={tone} dot>
-      {statusLabel(status)}
-    </Pill>
+    <ol className="grid grid-cols-4 gap-1.5" aria-label={copy.status.progress}>
+      {STEPS.map((step, i) => (
+        <li key={step} className="min-w-0" aria-current={i === current ? "step" : undefined}>
+          <span aria-hidden="true" className={cn("block h-1", bar(i))} />
+          <span className={cn("mt-2 block truncate text-xs", i === current ? "font-semibold text-ink" : "text-ink-soft")}>
+            {i === current ? statusLabel(status) : statusLabel(step)}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
-export function GroupSummary({ group, compact = false }: { group: Group; compact?: boolean }) {
+/** filas de dato y valor separadas por una línea fina */
+export function DetailList({ rows }: { rows: Array<[label: string, value: string]> }) {
   return (
-    <section className="space-y-2">
-      {!compact && (
-        <h2 className="text-xl font-semibold leading-tight">
-          <Marker>{group.name}</Marker>
-        </h2>
-      )}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt className="text-ink-soft">{copy.participant.when}</dt>
-        <dd>{formatDate(group.eventAt, { withTime: true })}</dd>
-        {group.place && (
-          <>
-            <dt className="text-ink-soft">{copy.participant.where}</dt>
-            <dd>{group.place}</dd>
-          </>
-        )}
-        <dt className="text-ink-soft">presupuesto</dt>
-        <dd>{formatBudget(group.budgetMin, group.budgetMax, group.currency || "CRC")}</dd>
-        {group.rules && (
-          <>
-            <dt className="text-ink-soft">reglas</dt>
-            <dd className="whitespace-pre-wrap">{group.rules}</dd>
-          </>
-        )}
-      </dl>
-    </section>
+    <dl className="divide-y divide-line border-y border-line">
+      {rows.map(([label, value]) => (
+        <div key={label} className="grid grid-cols-[7rem_1fr] gap-3 py-3.5">
+          <dt className="text-ink-soft">{label}</dt>
+          <dd className="min-w-0 whitespace-pre-wrap break-words">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
+}
+
+export function GroupSummary({ group }: { group: Group }) {
+  const rows: Array<[string, string]> = [[copy.participant.when, capitalize(formatDate(group.eventAt, { withTime: true }))]];
+  if (group.place) rows.push([copy.participant.where, group.place]);
+  rows.push([copy.participant.budgetLabel, formatBudget(group.budgetMin, group.budgetMax, group.currency || "CRC")]);
+  if (group.rules) rows.push([copy.participant.rulesLabel, group.rules]);
+  return <DetailList rows={rows} />;
 }

@@ -14,7 +14,7 @@ export function useAdminAuth() {
 
   const authHeader = useCallback(
     async (action: AdminAction, groupId: bigint): Promise<string> => {
-      if (!address) throw new Error("sin sesión");
+      if (!address) throw new Error("Sin sesión.");
       const message = buildAuthMessage(action, groupId);
       const sig = await signMessage(message);
       // starknet: "04‖x‖y" en hex (sin comprimir)
@@ -35,7 +35,7 @@ export function useAdminAuth() {
       const header = await authHeader(action, groupId);
       const res = await fetch(url, { ...init, headers: { ...(init.headers ?? {}), "x-qmt-auth": header } });
       const body = (await res.json().catch(() => ({}))) as T & { error?: string };
-      if (!res.ok) throw new Error(body.error ?? `error ${res.status}`);
+      if (!res.ok) throw new Error(body.error ?? `Error ${res.status}`);
       return body;
     },
     [authHeader],

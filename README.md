@@ -1,6 +1,6 @@
 # ¿quién me tocó?
 
-amigo secreto (intercambio de regalos anónimo) como pwa instalable en android y iphone, con el estilo de [ear.dev](https://www.instagram.com/ear.dev/). la "base de datos" es un contrato en starknet sepolia; el login y las wallets son de cavos (google o apple, sin que nadie vea gas ni firmas).
+amigo secreto (intercambio de regalos anónimo) como pwa instalable en android y iphone, hecha por [ear.dev](https://www.instagram.com/ear.dev/). la "base de datos" es un contrato en starknet sepolia; el login y las wallets son de cavos (google o apple, sin que nadie vea gas ni firmas).
 
 **precio: un follow.** la app no cobra nada. si te sirvió, seguí a [@ear.dev](https://www.instagram.com/ear.dev/) y subí una historia agradeciendo. la app misma te lo recuerda al final.
 
@@ -41,10 +41,10 @@ app/                 pantallas y rutas (next.js app router)
   g/[id]             vista del participante · /admin · /revelacion · /verificar · /calendario.ics · /historia
   p/[token]          link privado de los sin cuenta
   api/               workers: draw, reveal, reencrypt, emails, ghost-links, participants/email, ghost/[token]
-components/          ui (botón, pill, marcador, wishlist), cavos, pwa, share, admin, draw, screens
+components/          ui (botón, campo, etiqueta, hoja, íconos, wishlist), cavos, pwa, share, admin, draw, screens
 lib/
   brand/             tokens, links, fuentes para next/og
-  copy/es-CR.ts      todos los textos (minúsculas, voseo)
+  copy/es-CR.ts      todos los textos (voseo, ortografía normal)
   contract/          abi, lecturas (starknet.js), constructores de llamadas, eventos
   crypto/            sealed box, commitments, correo, llaves locales
   draw/              algoritmo del sorteo (assign.ts) y pipeline de cifrado
@@ -129,17 +129,18 @@ el login de cavos es por redirección (no popup), que es lo que funciona dentro 
 
 la pwa necesita https: usá la url de vercel (o un túnel como `cloudflared` apuntando a `pnpm dev`).
 
-- **android (chrome)**: abrí la url, esperá el aviso "agregame a tu pantalla" (o menú → instalar app). se abre sin barras del navegador, con el ícono y el nombre "quién me tocó".
+- **android (chrome)**: abrí la url, esperá el aviso "Agregame a tu pantalla" (o menú → instalar app). se abre sin barras del navegador, con el ícono y el nombre "Quién me tocó".
 - **iphone (safari)**: abrí la url, tocá compartir → agregar a inicio. la app muestra los dos pasos cuando detecta iphone. después abrí la app desde la pantalla de inicio y hacé el login ahí (ver nota de cavos arriba). probá también que respete el notch y la barra de abajo.
-- **offline**: activá modo avión y abrí la app: debe salir la pantalla "sin internet".
+- **offline**: activá modo avión y abrí la app: debe salir la pantalla "Sin internet".
 
 ## textos y marca
 
-- fondo blanco, inter, todo en minúsculas (`body { text-transform: lowercase }`; links y correos conservan su caja).
-- resaltados `#a4c7f1` (azul) y `#f1a4a6` (rosado) como marcador detrás de palabras clave.
-- sin emojis: la interfaz es texto, resaltados y los íconos de la pwa.
+- blanco, negro y grises tranquilos (`#1d1d1f`, `#6e6e73`, `#f5f5f7`); el único color es `#0066cc`, solo para links y el anillo de foco.
+- letra del sistema (sf en iphone, roboto en android), cuerpo de 17px, títulos grandes y mucho aire entre bloques.
+- cada grupo muestra en qué paso va: apuntándose, listos, sorteado, revelado.
+- sin emojis: la interfaz es texto, íconos de línea y los íconos de la pwa.
 - caritas en line-art: `public/stamps/cara-*.svg` son placeholders por si más adelante van las ilustraciones finales.
-- textos en `lib/copy/es-CR.ts`; un test comprueba que sigan en minúsculas y sin emojis.
+- textos en `lib/copy/es-CR.ts` con ortografía normal: mayúscula al inicio y en nombres propios, tildes, ¿ y ¡, y … en vez de tres puntos. `tests/brand.test.ts` lo comprueba, junto con el contraste de los grises y del azul.
 
 ## scripts
 

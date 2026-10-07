@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Marker } from "@/components/ui/Marker";
+import { buttonClass } from "@/components/ui/Button";
 import { copy } from "@/lib/copy/es-CR";
 
 export const metadata: Metadata = { title: copy.pwa.offlineTitle };
 
 export default function OfflinePage() {
   return (
-    <main className="safe-x safe-top safe-bottom flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-2xl font-semibold">
-        <Marker tone="pink">{copy.pwa.offlineTitle}</Marker>
-      </h1>
-      <p className="mt-4 max-w-xs text-ink-soft">{copy.pwa.offlineBody}</p>
-      <Link href="/" className="mt-8 inline-flex h-11 items-center rounded-pill bg-ink px-5 font-medium text-white">
+    <main className="safe-x safe-top safe-bottom mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center">
+      <h1 className="text-2xl font-semibold">{copy.pwa.offlineTitle}</h1>
+      <p className="mt-3 text-lg text-pretty text-ink-soft">{copy.pwa.offlineBody}</p>
+      <Link href="/" className={`${buttonClass({ size: "lg", fullWidth: true })} mt-10`}>
         {copy.pwa.retry}
       </Link>
     </main>

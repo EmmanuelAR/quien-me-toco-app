@@ -5,6 +5,7 @@ import { colors } from "@/lib/brand/tokens";
 /**
  * piezas compartidas para las imágenes generadas con next/og:
  * la vista previa de whatsapp y la imagen de la historia de instagram.
+ * satori necesita archivos de letra de verdad, así que aquí va inter en vez de la letra del sistema.
  * los archivos van relativos a la raíz del proyecto (así los incluye vercel).
  */
 let fontsPromise: Promise<{ regular: Buffer; semibold: Buffer }> | null = null;
@@ -31,17 +32,6 @@ export const og = {
   bg: colors.bg,
   ink: colors.ink,
   inkSoft: colors.inkSoft,
-  blue: colors.markerBlue,
-  pink: colors.markerPink,
+  line: colors.line,
   font: "Inter",
 };
-
-/** estilo del "marcador" detrás de una palabra (satori acepta solo flex + estilos inline) */
-export function markerStyle(tone: "blue" | "pink" = "blue"): Record<string, string | number> {
-  return {
-    backgroundColor: tone === "blue" ? og.blue : og.pink,
-    padding: "0 14px",
-    borderRadius: 12,
-    display: "flex",
-  };
-}

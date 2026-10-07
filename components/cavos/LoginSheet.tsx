@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { Marker } from "@/components/ui/Marker";
+import { AlertIcon } from "@/components/ui/icons";
 import { copy } from "@/lib/copy/es-CR";
 import { useLogin } from "./useLogin";
 
@@ -35,10 +35,7 @@ export function LoginSheet({ open, onClose, title }: LoginSheetProps) {
   const { login, starting, authError } = useLogin();
   return (
     <Sheet open={open} onClose={onClose} title={title ?? copy.auth.enter}>
-      <p className="mb-5 text-ink-soft">
-        <Marker>{copy.auth.enterWith}</Marker>
-      </p>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Button
           fullWidth
           size="lg"
@@ -47,7 +44,7 @@ export function LoginSheet({ open, onClose, title }: LoginSheetProps) {
           loading={starting === "google"}
           onClick={() => void login("google")}
         >
-          google
+          {copy.auth.google}
         </Button>
         <Button
           fullWidth
@@ -56,15 +53,16 @@ export function LoginSheet({ open, onClose, title }: LoginSheetProps) {
           loading={starting === "apple"}
           onClick={() => void login("apple")}
         >
-          apple
+          {copy.auth.apple}
         </Button>
       </div>
       {authError && (
-        <p className="mt-4 text-sm">
-          <Marker tone="pink">{copy.auth.callbackError}</Marker>
+        <p className="mt-4 flex items-start gap-1.5 text-sm">
+          <AlertIcon className="mt-0.5 size-4" />
+          {copy.auth.callbackError}
         </p>
       )}
-      <p className="mt-5 text-xs text-ink-soft">{copy.app.by}</p>
+      <p className="mt-6 text-center text-xs text-ink-soft">{copy.app.by}</p>
     </Sheet>
   );
 }

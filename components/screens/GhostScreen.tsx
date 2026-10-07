@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { RevealCard } from "@/components/draw/RevealCard";
 import { PayWithFollow } from "@/components/share/PayWithFollow";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
-import { Marker } from "@/components/ui/Marker";
 import { Spinner } from "@/components/ui/Spinner";
 import { WishlistCard } from "@/components/ui/WishlistCard";
+import { DetailList } from "./GroupSummary";
 import type { Wishlist } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
-import { formatBudget, formatDate } from "@/lib/format";
+import { capitalize, formatBudget, formatDate } from "@/lib/format";
 
 type View =
   | { kind: "slip"; groupId: string; groupName: string; eventAt: number; place: string; budgetMin: number; budgetMax: number; currency: string; giverName: string; receiverName: string; receiverIndex: number; wishlist: Wishlist; deviceToken: string }
@@ -63,8 +63,8 @@ export function GhostScreen({ token }: { token: string }) {
   if (view.kind === "loading") {
     return (
       <Page className="items-center justify-center">
-        <Spinner className="size-8" />
-        <p className="mt-3 text-ink-soft">{copy.ghost.loading}</p>
+        <Spinner className="size-8 text-ink-soft" />
+        <p className="mt-4 text-ink-soft">{copy.ghost.loading}</p>
       </Page>
     );
   }
@@ -75,34 +75,22 @@ export function GhostScreen({ token }: { token: string }) {
     return (
       <Page>
         <AppHeader backHref="/" />
-        <p className="mt-10 text-lg">
-          <Marker tone="pink">{message}</Marker>
-        </p>
+        <p className="text-xl font-semibold text-balance">{message}</p>
       </Page>
     );
   }
 
+  const details: Array<[string, string]> = [[copy.participant.when, capitalize(formatDate(view.eventAt, { withTime: true }))]];
+  if (view.place) details.push([copy.participant.where, view.place]);
+  details.push([copy.participant.budgetLabel, formatBudget(view.budgetMin, view.budgetMax, view.currency)]);
+
   return (
     <Page>
-      <AppHeader title={view.groupName} />
-      <div className="space-y-6 pb-10">
-        <p className="text-ink-soft">
-          hola, {view.giverName}. <Marker>{copy.ghost.title}</Marker>
-        </p>
+      <AppHeader title={view.groupName} subtitle={copy.ghost.hello(view.giverName)} />
+      <div className="space-y-12 pb-12">
         <RevealCard receiverName={view.receiverName} sealedOk storageKey={`qmt:ghost-revealed:${token}`} />
         <WishlistCard title={copy.wishlist.theirs(view.receiverName)} wishlist={view.wishlist} live />
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-          <dt className="text-ink-soft">{copy.participant.when}</dt>
-          <dd>{formatDate(view.eventAt, { withTime: true })}</dd>
-          {view.place && (
-            <>
-              <dt className="text-ink-soft">{copy.participant.where}</dt>
-              <dd>{view.place}</dd>
-            </>
-          )}
-          <dt className="text-ink-soft">presupuesto</dt>
-          <dd>{formatBudget(view.budgetMin, view.budgetMax, view.currency)}</dd>
-        </dl>
+        <DetailList rows={details} />
         <PayWithFollow compact />
       </div>
     </Page>

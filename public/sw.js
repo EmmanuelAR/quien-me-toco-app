@@ -4,7 +4,7 @@
    - /_next/static e imágenes: caché primero (son inmutables o cambian poco)
    - nunca cachea /api ni llamadas al rpc de starknet
 */
-const VERSION = "qmt-v3";
+const VERSION = "qmt-v4";
 const PRECACHE = `${VERSION}-precache`;
 const RUNTIME = `${VERSION}-runtime`;
 const OFFLINE_URL = "/offline";
@@ -56,7 +56,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request).catch(async () => {
         const cached = await caches.match(OFFLINE_URL);
-        return cached || new Response("sin internet", { status: 503, headers: { "content-type": "text/plain" } });
+        return cached || new Response("Sin internet", { status: 503, headers: { "content-type": "text/plain" } });
       }),
     );
     return;

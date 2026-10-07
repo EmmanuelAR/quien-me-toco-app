@@ -1,6 +1,13 @@
-/** fechas y plata en español de costa rica, siempre en minúsculas */
+/**
+ * fechas y plata en español de costa rica. las fechas salen en minúscula para ir
+ * en medio de una frase ("se habilita el 23 de diciembre"); si van solas, pasan por capitalize.
+ */
 
 const LOCALE = "es-CR";
+
+export function capitalize(text: string): string {
+  return text.charAt(0).toLocaleUpperCase(LOCALE) + text.slice(1);
+}
 
 export function formatDate(unixSeconds: number, opts: { withTime?: boolean; timeZone?: string } = {}): string {
   const d = new Date(unixSeconds * 1000);
@@ -11,7 +18,8 @@ export function formatDate(unixSeconds: number, opts: { withTime?: boolean; time
     ...(opts.withTime ? { hour: "numeric", minute: "2-digit" } : {}),
     ...(opts.timeZone ? { timeZone: opts.timeZone } : {}),
   }).format(d);
-  return text.toLowerCase().replace(",", "");
+  // node y el navegador no ponen el mismo espacio antes de "p. m."; si difieren, react no hidrata
+  return text.toLowerCase().replace(",", "").replace(/\s/g, " ");
 }
 
 export function formatDateShort(unixSeconds: number, timeZone?: string): string {
@@ -46,7 +54,7 @@ export function formatMoney(amount: number, currency = "CRC"): string {
       .format(amount)
       .replace(/\u00a0/g, " ");
   } catch {
-    return `${amount} ${currency}`.toLowerCase();
+    return `${amount} ${currency}`;
   }
 }
 

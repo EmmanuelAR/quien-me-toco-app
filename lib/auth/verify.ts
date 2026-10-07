@@ -22,11 +22,11 @@ export function verifySignedMessage(
   now = Date.now(),
 ): VerifyOutcome {
   if (!payload?.address || !payload.message || !payload.signature || !payload.publicKey) {
-    return { ok: false, error: "falta la firma" };
+    return { ok: false, error: "Falta la firma." };
   }
   const parsed = parseAuthMessage(payload.message);
-  if (!parsed || parsed.action !== action || parsed.groupId !== groupId) return { ok: false, error: "mensaje inválido" };
-  if (Math.abs(now - parsed.issuedAt) > AUTH_MAX_AGE_MS) return { ok: false, error: "firma vencida" };
+  if (!parsed || parsed.action !== action || parsed.groupId !== groupId) return { ok: false, error: "Mensaje inválido." };
+  if (Math.abs(now - parsed.issuedAt) > AUTH_MAX_AGE_MS) return { ok: false, error: "La firma venció. Probá de nuevo." };
 
   let signature: Uint8Array;
   let publicKey: Uint8Array;
@@ -36,10 +36,10 @@ export function verifySignedMessage(
     publicKey = hexToBytes(payload.publicKey);
     address = normalizeAddress(payload.address);
   } catch {
-    return { ok: false, error: "firma mal formada" };
+    return { ok: false, error: "Firma mal formada." };
   }
   if (publicKey.length !== 65 || publicKey[0] !== 0x04 || signature.length !== 64) {
-    return { ok: false, error: "firma mal formada" };
+    return { ok: false, error: "Firma mal formada." };
   }
   let valid = false;
   try {
@@ -47,7 +47,7 @@ export function verifySignedMessage(
   } catch {
     valid = false;
   }
-  if (!valid) return { ok: false, error: "firma inválida" };
+  if (!valid) return { ok: false, error: "Firma inválida." };
   return { ok: true, address, publicKey };
 }
 

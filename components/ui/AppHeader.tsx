@@ -2,38 +2,44 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { copy } from "@/lib/copy/es-CR";
 import { cn } from "@/lib/cn";
+import { ChevronLeftIcon } from "./icons";
 
 export interface AppHeaderProps {
   title?: ReactNode;
+  /** línea chica arriba del título, por ejemplo el nombre del grupo */
+  eyebrow?: ReactNode;
+  subtitle?: ReactNode;
   backHref?: string;
   right?: ReactNode;
+  /** va debajo del título, por ejemplo en qué va el grupo */
+  children?: ReactNode;
   className?: string;
 }
 
-function BackIcon() {
+/** barra con la flecha de volver y, debajo, el título grande de la pantalla */
+export function AppHeader({ title, eyebrow, subtitle, backHref, right, children, className }: AppHeaderProps) {
   return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function AppHeader({ title, backHref, right, className }: AppHeaderProps) {
-  return (
-    <header className={cn("safe-top flex items-center justify-between gap-3 pb-2", className)}>
-      <div className="flex min-w-0 items-center gap-2">
-        {backHref && (
-          <Link
-            href={backHref}
-            aria-label={copy.common.back}
-            className="-ml-2 flex size-10 items-center justify-center rounded-pill hover:bg-surface"
-          >
-            <BackIcon />
-          </Link>
-        )}
-        {title && <h1 className="truncate text-lg font-semibold">{title}</h1>}
-      </div>
-      {right && <div className="shrink-0">{right}</div>}
+    <header className={cn("safe-top pb-10", className)}>
+      {(backHref || right) && (
+        <div className="-mx-3 flex h-11 items-center justify-between gap-3">
+          {backHref ? (
+            <Link
+              href={backHref}
+              aria-label={copy.common.back}
+              className="flex size-11 items-center justify-center rounded-pill text-ink transition-colors hover:bg-ink/5"
+            >
+              <ChevronLeftIcon className="size-6" />
+            </Link>
+          ) : (
+            <span />
+          )}
+          {right && <div className="shrink-0 px-3">{right}</div>}
+        </div>
+      )}
+      {eyebrow && <p className="mt-6 truncate text-sm font-semibold text-ink-soft">{eyebrow}</p>}
+      {title && <h1 className={cn("text-2xl font-semibold text-balance", eyebrow ? "mt-1" : "mt-6")}>{title}</h1>}
+      {subtitle && <p className="mt-3 text-lg text-pretty text-ink-soft">{subtitle}</p>}
+      {children && <div className="mt-8">{children}</div>}
     </header>
   );
 }

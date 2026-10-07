@@ -3,7 +3,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { Marker } from "@/components/ui/Marker";
 import { copy } from "@/lib/copy/es-CR";
 import { cn } from "@/lib/cn";
 
@@ -110,26 +109,21 @@ export function InstallPrompt({ mode = "banner", className }: InstallPromptProps
 
   const sheet = (
     <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={copy.pwa.install}>
-      <p className="mb-4 text-ink-soft">{copy.pwa.installBody}</p>
+      <p className="mb-6 text-pretty text-ink-soft">{copy.pwa.installBody}</p>
       {ios ? (
-        <ol className="mb-5 space-y-3">
-          <li className="flex items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-pill bg-marker-blue-soft text-sm font-semibold">1</span>
-            <span className="flex items-center gap-2">
-              {copy.pwa.iosSteps[0]} <ShareIcon />
-            </span>
-          </li>
-          <li className="flex items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-pill bg-marker-pink-soft text-sm font-semibold">2</span>
-            <span className="flex items-center gap-2">
-              {copy.pwa.iosSteps[1]} <PlusSquareIcon />
-            </span>
-          </li>
+        <ol className="mb-8 divide-y divide-line border-y border-line">
+          {copy.pwa.iosSteps.map((step, i) => (
+            <li key={step} className="flex items-center gap-4 py-4">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-pill bg-surface text-sm font-semibold tabular">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1">{step}</span>
+              {i === 0 ? <ShareIcon /> : <PlusSquareIcon />}
+            </li>
+          ))}
         </ol>
       ) : (
-        <p className="mb-5">
-          <Marker>menú del navegador</Marker> → instalar app
-        </p>
+        <p className="mb-8 text-pretty">{copy.pwa.androidSteps}</p>
       )}
       <Button fullWidth variant="secondary" onClick={() => setSheetOpen(false)}>
         {copy.common.close}
@@ -150,23 +144,14 @@ export function InstallPrompt({ mode = "banner", className }: InstallPromptProps
 
   return (
     <>
-      <div
-        className={cn(
-          "animate-rise flex flex-col gap-3 rounded-md border border-line bg-white p-4 shadow-card",
-          className,
-        )}
-        role="region"
-        aria-label={copy.pwa.install}
-      >
-        <div className="min-w-0 sm:flex-1">
-          <p className="font-medium">{copy.pwa.install}</p>
-          <p className="text-pretty text-sm text-ink-soft">{copy.pwa.installBody}</p>
-        </div>
-        <div className="flex shrink-0 justify-end gap-1">
-          <Button variant="ghost" className="h-9 px-3" onClick={dismiss}>
+      <div className={cn("animate-rise rounded-md bg-surface p-5", className)} role="region" aria-label={copy.pwa.install}>
+        <p className="font-semibold">{copy.pwa.install}</p>
+        <p className="mt-1 text-sm text-pretty text-ink-soft">{copy.pwa.installBody}</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={dismiss}>
             {copy.pwa.later}
           </Button>
-          <Button className="h-9 px-4" onClick={() => void install()}>
+          <Button size="sm" onClick={() => void install()}>
             {deferred ? copy.pwa.installAndroid : copy.common.yes}
           </Button>
         </div>

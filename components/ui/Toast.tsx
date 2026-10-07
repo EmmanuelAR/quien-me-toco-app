@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { AlertIcon, CheckIcon } from "./icons";
 
-type Tone = "neutral" | "blue" | "pink";
+type Tone = "neutral" | "ok" | "error";
 interface ToastItem {
   id: number;
   text: string;
@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((text: string, tone: Tone = "neutral") => {
     const id = ++counter.current;
     setItems((prev) => [...prev, { id, text, tone }]);
-    window.setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), 2600);
+    window.setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), tone === "error" ? 4000 : 2600);
   }, []);
 
   const api = useMemo(() => ({ show }), [show]);
@@ -32,20 +32,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={api}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 px-4 pb-[max(1.25rem,var(--safe-bottom))]"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 px-6 pb-[max(1.5rem,var(--safe-bottom))]"
+        role="status"
         aria-live="polite"
       >
         {items.map((t) => (
           <div
             key={t.id}
-            className={cn(
-              "animate-rise rounded-pill px-4 py-2 text-sm font-medium shadow-card",
-              t.tone === "neutral" && "bg-ink text-white",
-              t.tone === "blue" && "bg-marker-blue text-ink",
-              t.tone === "pink" && "bg-marker-pink text-ink",
-            )}
+            className="animate-rise flex max-w-full items-center gap-2 rounded-pill bg-ink px-5 py-3 text-sm font-medium text-white shadow-float"
           >
-            {t.text}
+            {t.tone === "ok" && <CheckIcon className="size-4" />}
+            {t.tone === "error" && <AlertIcon className="size-4" />}
+            <span>{t.text}</span>
           </div>
         ))}
       </div>

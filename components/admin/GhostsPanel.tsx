@@ -44,24 +44,24 @@ export function GhostsPanel({ groupId, participants, canEdit, canRemove, saving,
   };
 
   return (
-    <section className="space-y-3" aria-label={copy.admin.addGhost}>
+    <section className="space-y-4" aria-label={copy.admin.ghostsTitle}>
       <div>
-        <h3 className="text-lg font-semibold">sin cuenta</h3>
-        <p className="text-sm text-ink-soft">{copy.admin.ghostHint}</p>
+        <h2 className="text-lg font-semibold">{copy.admin.ghostsTitle}</h2>
+        <p className="mt-1 text-sm text-pretty text-ink-soft">{copy.admin.ghostHint}</p>
       </div>
       {ghosts.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-line border-y border-line">
           {ghosts.map((p) => (
-            <li key={p.index} className="flex items-center justify-between gap-2 rounded-md border border-line px-4 py-2">
-              <span className="truncate">{p.name}</span>
-              <span className="flex shrink-0 gap-1">
+            <li key={p.index} className="flex min-h-14 items-center justify-between gap-2">
+              <span className="min-w-0 truncate">{p.name}</span>
+              <span className="-mr-4 flex shrink-0">
                 {canEdit && (
-                  <Button variant="ghost" className="h-9 px-3" onClick={() => void openEditor(p)}>
+                  <Button variant="ghost" size="sm" onClick={() => void openEditor(p)}>
                     {copy.admin.ghostWishlist}
                   </Button>
                 )}
                 {canRemove && (
-                  <Button variant="ghost" className="h-9 px-3" onClick={() => void onRemove(p.index)} disabled={saving}>
+                  <Button variant="ghost" size="sm" onClick={() => void onRemove(p.index)} disabled={saving} aria-label={copy.admin.removePerson(p.name)}>
                     {copy.admin.remove}
                   </Button>
                 )}
@@ -77,11 +77,11 @@ export function GhostsPanel({ groupId, participants, canEdit, canRemove, saving,
       )}
 
       <Sheet open={open} onClose={() => setOpen(false)} title={copy.admin.addGhost}>
-        <form className="space-y-4 pb-2" onSubmit={(e) => void submit(e)}>
-          <Field label={copy.admin.ghostName} value={name} onChange={(e) => setName(e.target.value)} placeholder="la abuela" maxLength={40} required />
+        <form className="space-y-5 pb-2" onSubmit={(e) => void submit(e)}>
+          <Field label={copy.admin.ghostName} value={name} onChange={(e) => setName(e.target.value)} placeholder={copy.admin.ghostPlaceholder} maxLength={40} required />
           <TextArea label={copy.wishlist.ideas} value={wishlist.ideas} onChange={(e) => setWishlist({ ...wishlist, ideas: e.target.value })} placeholder={copy.wishlist.ideasPlaceholder} rows={2} maxLength={600} />
           <TextArea label={copy.wishlist.sizes} value={wishlist.sizes} onChange={(e) => setWishlist({ ...wishlist, sizes: e.target.value })} placeholder={copy.wishlist.sizesPlaceholder} rows={1} maxLength={200} />
-          <Button type="submit" fullWidth loading={saving}>
+          <Button type="submit" size="lg" fullWidth loading={saving}>
             {copy.admin.ghostAdd}
           </Button>
         </form>

@@ -7,7 +7,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   try {
     const { id } = await ctx.params;
     const groupId = parseGroupId(id);
-    if (!groupId) return json({ error: "grupo inválido" }, 400);
+    if (!groupId) return json({ error: "Grupo inválido." }, 400);
     await verifyAdmin(authFromRequest(req), "ghost-links", groupId);
     return json({ links: await ghostLinks(groupId) });
   } catch (e) {

@@ -11,13 +11,13 @@ import { RevealCard } from "@/components/draw/RevealCard";
 import { useSlip } from "@/components/draw/useSlip";
 import { AddToCalendar } from "@/components/share/AddToCalendar";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
-import { Button } from "@/components/ui/Button";
-import { Marker } from "@/components/ui/Marker";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { WishlistCard } from "@/components/ui/WishlistCard";
-import { GroupSummary, StatusPill } from "./GroupSummary";
+import { AlertIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { GroupProgress, GroupSummary } from "./GroupSummary";
 import { calls } from "@/lib/contract/calls";
 import { readWishlist } from "@/lib/contract/reads";
 import { GroupStatus, emptyWishlist, type Wishlist } from "@/lib/contract/types";
@@ -66,16 +66,16 @@ export function ParticipantScreen({ groupId }: { groupId: bigint }) {
     try {
       await write(calls.updateWishlist(groupId, me.index, next));
       setMyWishlist(next);
-      toast.show(copy.wishlist.saved, "blue");
+      toast.show(copy.wishlist.saved, "ok");
     } catch {
-      toast.show(copy.common.error, "pink");
+      toast.show(copy.common.error, "error");
     }
   };
 
   if (loading && !data) {
     return (
       <Page className="items-center justify-center">
-        <Spinner className="size-8" />
+        <Spinner className="size-8 text-ink-soft" />
       </Page>
     );
   }
@@ -83,9 +83,16 @@ export function ParticipantScreen({ groupId }: { groupId: bigint }) {
     return (
       <Page>
         <AppHeader backHref="/" />
-        <p className="mt-10 text-lg">
-          <Marker tone="pink">{error ? copy.common.error : copy.common.notFound}</Marker>
-        </p>
+        <p className="text-xl font-semibold text-balance">{error ? copy.common.error : copy.common.notFound}</p>
+      </Page>
+    );
+  }
+
+  if (group.archived && !isAdmin) {
+    return (
+      <Page>
+        <AppHeader backHref="/" title={group.name} right={<Pill>{copy.status.archived}</Pill>} />
+        <p className="text-lg text-pretty text-ink-soft">{copy.admin.archived}</p>
       </Page>
     );
   }
@@ -95,35 +102,35 @@ export function ParticipantScreen({ groupId }: { groupId: bigint }) {
 
   return (
     <Page>
-      <AppHeader backHref="/" title={group.name} right={<StatusPill status={group.status} />} />
+      <AppHeader backHref="/" title={group.name}>
+        <GroupProgress status={group.status} />
+      </AppHeader>
 
       {!isAuthenticated ? (
-        <div className="mt-6 space-y-4">
-          <GroupSummary group={group} compact />
+        <div className="space-y-8 pb-12">
+          <GroupSummary group={group} />
           <Button size="lg" fullWidth loading={isLoading} onClick={() => setLoginOpen(true)}>
             {copy.auth.enter}
           </Button>
         </div>
       ) : !me ? (
-        <div className="mt-6 space-y-4">
-          <GroupSummary group={group} compact />
-          <p className="text-lg">
-            <Marker tone="pink">{copy.participant.notInGroup}</Marker>
-          </p>
+        <div className="space-y-8 pb-12">
+          <p className="text-xl font-semibold">{copy.participant.notInGroup}</p>
+          <GroupSummary group={group} />
           {isAdmin && (
-            <Link href={`/g/${groupId.toString()}/admin`} className="flex h-12 items-center justify-center rounded-pill bg-ink px-5 font-medium text-white">
+            <Link href={`/g/${groupId.toString()}/admin`} className={buttonClass({ size: "lg", fullWidth: true })}>
               {copy.admin.title}
             </Link>
           )}
         </div>
       ) : (
-        <div className="space-y-6 pb-8">
+        <div className="space-y-12 pb-12">
           {group.status < GroupStatus.Drawn && (
-            <section className="space-y-3">
-              <p className="text-ink-soft">
+            <section className="space-y-1">
+              <p className="text-lg text-pretty">
                 {group.status === GroupStatus.DrawRequested ? copy.participant.drawing : copy.participant.waiting}
               </p>
-              {missing > 0 && group.status === GroupStatus.Open && <Pill tone="blue">{copy.participant.missing(missing)}</Pill>}
+              {missing > 0 && group.status === GroupStatus.Open && <p className="text-ink-soft">{copy.participant.missing(missing)}</p>}
             </section>
           )}
 
@@ -136,28 +143,25 @@ export function ParticipantScreen({ groupId }: { groupId: bigint }) {
               ) : slip.kind === "ready" && receiver ? (
                 <RevealCard receiverName={receiver.name} sealedOk={slip.sealedOk} storageKey={`qmt:revealed:${groupId}:${me.index}`} />
               ) : slip.kind === "no-key" ? (
-                <section className="rounded-md border border-line bg-white p-5 shadow-card">
-                  <p className="mb-3">
-                    <Marker tone="pink">{copy.participant.noKeyYet}</Marker>
-                  </p>
-                  <Button fullWidth onClick={() => void moveHere()} loading={busy}>
+                <section className="space-y-5 rounded-md bg-surface p-6">
+                  <p className="text-lg text-pretty">{copy.participant.noKeyYet}</p>
+                  <Button size="lg" fullWidth onClick={() => void moveHere()} loading={busy}>
                     {copy.participant.moveKey}
                   </Button>
                 </section>
               ) : slip.kind === "moving" ? (
-                <section className="rounded-md border border-line bg-white p-5 shadow-card">
-                  <div className="flex items-center gap-3">
-                    <Spinner />
-                    <div>
-                      <p>{copy.participant.movingKey}</p>
-                      <p className="text-sm text-ink-soft">{copy.participant.movingKeyHint}</p>
-                    </div>
+                <section className="flex items-start gap-3 rounded-md bg-surface p-6">
+                  <Spinner className="mt-0.5 text-ink-soft" />
+                  <div>
+                    <p>{copy.participant.movingKey}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{copy.participant.movingKeyHint}</p>
                   </div>
                 </section>
               ) : slip.kind === "error" ? (
-                <section className="rounded-md border border-line bg-white p-5 shadow-card">
-                  <p className="mb-3">
-                    <Marker tone="pink">{copy.common.error}</Marker>
+                <section className="space-y-5 rounded-md bg-surface p-6">
+                  <p className="flex items-start gap-2">
+                    <AlertIcon className="mt-0.5" />
+                    {copy.common.error}
                   </p>
                   <Button variant="secondary" onClick={() => void retry()}>
                     {copy.pwa.retry}
@@ -173,17 +177,22 @@ export function ParticipantScreen({ groupId }: { groupId: bigint }) {
 
           <WishlistCard title={copy.wishlist.mine} wishlist={myWishlist ?? emptyWishlist} editable saving={busy} onSave={saveMine} />
 
-          <GroupSummary group={group} compact />
-          <AddToCalendar group={group} />
+          <section className="space-y-4">
+            <GroupSummary group={group} />
+            <AddToCalendar group={group} />
+          </section>
 
-          {isAdmin && (
-            <Link href={`/g/${groupId.toString()}/admin`} className="block text-center text-sm underline decoration-marker-blue decoration-2 underline-offset-4">
-              {copy.admin.title}
-            </Link>
-          )}
-          <button type="button" onClick={() => void refresh()} className="text-center text-xs text-ink-soft">
-            {copy.pwa.retry}
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            {isAdmin && (
+              <Link href={`/g/${groupId.toString()}/admin`} className="link flex items-center gap-1 py-2">
+                {copy.admin.title}
+                <ChevronRightIcon className="size-4" />
+              </Link>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+              {copy.common.refresh}
+            </Button>
+          </div>
         </div>
       )}
 

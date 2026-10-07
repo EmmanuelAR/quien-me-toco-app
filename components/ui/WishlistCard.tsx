@@ -52,23 +52,22 @@ export function WishlistCard({
   };
 
   return (
-    <section
-      className={cn("relative rounded-md border border-line bg-white p-5 shadow-card", className)}
-      aria-label={title}
-    >
-      <header className="mb-3 flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold leading-tight">{title}</h3>
-        {live && !editing && <Pill tone="blue" dot>{copy.wishlist.updatedLive}</Pill>}
-        {editable && !editing && (
-          <Button variant="ghost" size="md" className="-mr-2 -mt-1 h-9 px-3" onClick={startEdit}>
-            {copy.wishlist.edit}
-          </Button>
-        )}
+    <section className={cn("rounded-md bg-surface p-6", className)} aria-label={title}>
+      <header className="mb-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 text-lg font-semibold text-balance break-words">{title}</h3>
+          {editable && !editing && (
+            <Button variant="ghost" size="sm" className="-mr-3 -mt-2" onClick={startEdit}>
+              {copy.wishlist.edit}
+            </Button>
+          )}
+        </div>
+        {live && !editing && <Pill className="mt-2 bg-white">{copy.wishlist.updatedLive}</Pill>}
       </header>
 
       {editing ? (
         <form
-          className="space-y-4"
+          className="space-y-5"
           onSubmit={(e) => {
             e.preventDefault();
             void save();
@@ -97,7 +96,6 @@ export function WishlistCard({
             onChange={(e) => setDraft({ ...draft, links: e.target.value })}
             rows={2}
             maxLength={600}
-            className="keep-case"
           />
           <div className="flex gap-2">
             <Button type="submit" loading={saving}>
@@ -111,30 +109,30 @@ export function WishlistCard({
       ) : isEmpty(wishlist) ? (
         <p className="text-ink-soft">{copy.wishlist.empty}</p>
       ) : (
-        <dl className="space-y-3">
+        <dl className="space-y-4">
           {wishlist.ideas && (
             <div>
               <dt className="text-sm text-ink-soft">{copy.wishlist.ideas}</dt>
-              <dd className="whitespace-pre-wrap">{wishlist.ideas}</dd>
+              <dd className="mt-0.5 whitespace-pre-wrap break-words">{wishlist.ideas}</dd>
             </div>
           )}
           {wishlist.sizes && (
             <div>
               <dt className="text-sm text-ink-soft">{copy.wishlist.sizes}</dt>
-              <dd className="whitespace-pre-wrap">{wishlist.sizes}</dd>
+              <dd className="mt-0.5 whitespace-pre-wrap break-words">{wishlist.sizes}</dd>
             </div>
           )}
           {wishlist.links && (
             <div>
               <dt className="text-sm text-ink-soft">{copy.wishlist.links}</dt>
-              <dd className="space-y-1">
+              <dd className="mt-0.5 space-y-1">
                 {parseLinks(wishlist.links).map((l) => (
                   <a
                     key={l}
                     href={/^https?:\/\//i.test(l) ? l : `https://${l}`}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="keep-case block truncate underline decoration-marker-blue decoration-2 underline-offset-4"
+                    className="link block truncate"
                   >
                     {l}
                   </a>

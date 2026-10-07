@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { render } from "@react-email/components";
 import { createElement } from "react";
 import { buildIcs, googleCalendarUrl } from "@/lib/calendar";
-import { formatBudget, formatDate, formatDateTimeLong, formatMoney } from "@/lib/format";
+import { capitalize, formatBudget, formatDate, formatDateTimeLong, formatMoney } from "@/lib/format";
 import { TeToco } from "@/emails/TeToco";
-import { colors } from "@/lib/brand/tokens";
 
 const event = {
   groupId: 5n,
@@ -23,10 +22,10 @@ describe("calendario", () => {
     expect(ics).toContain("BEGIN:VCALENDAR");
     expect(ics).toContain("DTSTART:20261224T020000Z");
     expect(ics).toContain("DTEND:20261224T040000Z");
-    expect(ics).toContain("SUMMARY:intercambio: navidad familia aguero");
+    expect(ics).toContain("SUMMARY:Intercambio: navidad familia aguero");
     expect(ics).toContain("LOCATION:casa de la abuela");
     expect(ics).toContain("UID:qmt-5@quienmetoco");
-    expect(ics).toMatch(/DESCRIPTION:.*presupuesto/);
+    expect(ics).toMatch(/DESCRIPTION:.*Presupuesto/);
     expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
     // ninguna línea pasa de 75 bytes
     for (const line of ics.split("\r\n")) expect(Buffer.byteLength(line)).toBeLessThanOrEqual(75);
@@ -37,7 +36,7 @@ describe("calendario", () => {
     expect(url.hostname).toBe("calendar.google.com");
     expect(url.searchParams.get("dates")).toBe("20261224T020000Z/20261224T040000Z");
     expect(url.searchParams.get("location")).toBe("casa de la abuela");
-    expect(url.searchParams.get("text")).toBe("intercambio: navidad familia aguero");
+    expect(url.searchParams.get("text")).toBe("Intercambio: navidad familia aguero");
   });
 });
 
@@ -46,6 +45,7 @@ describe("formato es-cr", () => {
     const d = formatDate(event.eventAt, { withTime: true, timeZone: "America/Costa_Rica" });
     expect(d).toBe(d.toLowerCase());
     expect(d).toContain("diciembre");
+    expect(capitalize(d)).toMatch(/^Miércoles 23 de diciembre/);
     expect(formatDateTimeLong(event.eventAt, "America/Costa_Rica")).toContain("a las");
     expect(formatMoney(5000, "CRC")).toMatch(/5/);
     expect(formatBudget(5000, 10000, "CRC")).toContain(" a ");
@@ -54,7 +54,7 @@ describe("formato es-cr", () => {
 });
 
 describe("correo te tocó", () => {
-  it("renderiza con el nombre, el marcador y el pie de @ear.dev", async () => {
+  it("renderiza con el nombre, ortografía normal y el pie de @ear.dev", async () => {
     const html = await render(
       createElement(TeToco, {
         appUrl: "https://quienmetoco.ear.dev",
@@ -69,7 +69,8 @@ describe("correo te tocó", () => {
     );
     expect(html).toContain("te tocó");
     expect(html).toContain("beto");
-    expect(html).toContain(colors.markerBlue);
+    expect(html).toContain("Abrir la app");
+    expect(html).not.toMatch(/text-transform:\s*lowercase/i);
     expect(html).toContain("instagram.com/ear.dev");
     expect(html).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
     const text = await render(

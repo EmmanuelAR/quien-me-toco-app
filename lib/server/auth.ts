@@ -34,9 +34,9 @@ async function isAuthorizedSigner(account: string, publicKey: Uint8Array): Promi
 export async function verifyAdmin(payload: Partial<AdminAuthPayload> | null, action: AdminAction, groupId: bigint): Promise<Group> {
   const outcome = verifySignedMessage(payload, action, groupId);
   if (!outcome.ok) throw new AuthError(outcome.error);
-  if (!(await isAuthorizedSigner(outcome.address, outcome.publicKey))) throw new AuthError("llave no autorizada");
+  if (!(await isAuthorizedSigner(outcome.address, outcome.publicKey))) throw new AuthError("Esta llave no está autorizada.");
   const group = await readGroup(groupId);
-  if (normalizeAddress(group.admin) !== outcome.address) throw new AuthError("no sos la admin", 403);
+  if (normalizeAddress(group.admin) !== outcome.address) throw new AuthError("Este panel es solo para quien organiza.", 403);
   return group;
 }
 

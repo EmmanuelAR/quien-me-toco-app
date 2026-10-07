@@ -4,13 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { useAdminAuth } from "@/components/cavos/useAdminAuth";
 import { Button } from "@/components/ui/Button";
-import { Marker } from "@/components/ui/Marker";
 import { Pill } from "@/components/ui/Pill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
+import { AlertIcon, CheckIcon } from "@/components/ui/icons";
+import { colors } from "@/lib/brand/tokens";
 import type { Group } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
+import { cn } from "@/lib/cn";
 
 interface EmailSummary {
   total: number;
@@ -26,6 +28,13 @@ interface GhostLink {
   name: string;
   url: string;
   used: boolean;
+}
+
+function emailStatusLabel(status: string): string {
+  if (status === "sent") return copy.admin.emailStatus.sent;
+  if (status === "pending") return copy.admin.emailStatus.pending;
+  if (status === "tomorrow") return copy.admin.emailStatus.tomorrow;
+  return copy.admin.emailStatus.failed;
 }
 
 /** después del sorteo: estado de correos y links privados (ambos solo para la admin) */
@@ -62,7 +71,7 @@ export function AfterDrawPanel({ group }: { group: Group }) {
     try {
       setEmails(await adminFetch<EmailSummary>("emails", group.id, `/api/groups/${group.id}/emails`, { method: "POST" }));
     } catch {
-      toast.show(copy.common.error, "pink");
+      toast.show(copy.common.error, "error");
     } finally {
       setRetrying(false);
     }
@@ -70,21 +79,22 @@ export function AfterDrawPanel({ group }: { group: Group }) {
 
   const copyLink = async (l: GhostLink) => {
     await navigator.clipboard.writeText(l.url);
-    toast.show(copy.invite.copied, "blue");
+    toast.show(copy.invite.copied, "ok");
   };
 
   const showQr = async (l: GhostLink) => {
-    const dataUrl = await QRCode.toDataURL(l.url, { margin: 1, width: 280, color: { dark: "#111111", light: "#ffffff" } });
+    const dataUrl = await QRCode.toDataURL(l.url, { margin: 1, width: 280, color: { dark: colors.ink, light: colors.bg } });
     setQr({ name: l.name, dataUrl });
   };
 
   if (error) {
     return (
-      <section className="rounded-md border border-line p-4">
-        <p className="text-sm">
-          <Marker tone="pink">{error}</Marker>
+      <section className="space-y-3">
+        <p className="flex items-start gap-1.5">
+          <AlertIcon className="mt-1 size-4" />
+          {error}
         </p>
-        <Button variant="ghost" className="mt-2 h-9 px-3" onClick={() => void load()}>
+        <Button variant="secondary" size="sm" onClick={() => void load()}>
           {copy.pwa.retry}
         </Button>
       </section>
@@ -92,71 +102,73 @@ export function AfterDrawPanel({ group }: { group: Group }) {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-3" aria-label="correos">
+    <div className="space-y-12">
+      <section className="space-y-4" aria-label={copy.admin.emailsLabel}>
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold">
-            {emails ? copy.admin.emails(emails.sent, emails.total) : <Spinner className="size-4" />}
-          </h3>
+          <h2 className="text-lg font-semibold tabular">
+            {emails ? copy.admin.emails(emails.sent, emails.total) : <Spinner className="size-4 text-ink-soft" />}
+          </h2>
           {emails && emails.sent < emails.total && (
-            <Button variant="secondary" className="h-9 px-3" loading={retrying} onClick={() => void retry()}>
+            <Button variant="secondary" size="sm" loading={retrying} onClick={() => void retry()}>
               {copy.admin.emailsRetry}
             </Button>
           )}
         </div>
-        {emails && emails.tomorrow > 0 && (
-          <p className="text-sm">
-            <Marker tone="pink">{copy.admin.emailsTomorrow}</Marker>
-          </p>
-        )}
+        {emails && emails.tomorrow > 0 && <p className="text-sm text-pretty text-ink-soft">{copy.admin.emailsTomorrow}</p>}
         {emails && (
-          <ul className="flex flex-wrap gap-2">
+          <ul className="divide-y divide-line border-y border-line">
             {emails.records
               .filter((r) => r.status !== "ghost")
-              .map((r) => (
-                <li key={r.index}>
-                  <Pill tone={r.status === "sent" ? "blue" : r.status === "pending" ? "neutral" : "pink"} dot>
-                    {r.name}
-                  </Pill>
-                </li>
-              ))}
+              .map((r) => {
+                const failed = r.status !== "sent" && r.status !== "pending" && r.status !== "tomorrow";
+                return (
+                  <li key={r.index} className="flex min-h-12 items-center justify-between gap-3">
+                    <span className="min-w-0 truncate">{r.name}</span>
+                    <span className={cn("flex shrink-0 items-center gap-1.5 text-sm", r.status === "sent" || failed ? "text-ink" : "text-ink-soft")}>
+                      {r.status === "sent" && <CheckIcon className="size-4" />}
+                      {failed && <AlertIcon className="size-4" />}
+                      {emailStatusLabel(r.status)}
+                    </span>
+                  </li>
+                );
+              })}
           </ul>
         )}
       </section>
 
       {links && links.length > 0 && (
-        <section className="space-y-3" aria-label={copy.admin.ghostLinks}>
+        <section className="space-y-4" aria-label={copy.admin.ghostLinks}>
           <div>
-            <h3 className="text-lg font-semibold">{copy.admin.ghostLinks}</h3>
-            <p className="text-sm text-ink-soft">{copy.admin.ghostLinksHint}</p>
+            <h2 className="text-lg font-semibold">{copy.admin.ghostLinks}</h2>
+            <p className="mt-1 text-sm text-pretty text-ink-soft">{copy.admin.ghostLinksHint}</p>
           </div>
-          <ul className="space-y-2">
+          <ul className="divide-y divide-line border-y border-line">
             {links.map((l) => (
-              <li key={l.index} className="flex flex-col gap-2 rounded-md border border-line p-3">
-                <span className="flex items-center gap-2">
-                  {l.name}
-                  {l.used && <Pill tone="blue">ya lo abrió</Pill>}
-                </span>
-                <span className="flex gap-2">
-                  <Button className="h-9 px-3" onClick={() => void copyLink(l)}>
+              <li key={l.index} className="space-y-3 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate font-medium">{l.name}</span>
+                  {l.used && <Pill>{copy.admin.ghostOpened}</Pill>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => void copyLink(l)}>
                     {copy.admin.copyGhostLink(l.name)}
                   </Button>
-                  <Button variant="secondary" className="h-9 px-3" onClick={() => void showQr(l)}>
+                  <Button variant="secondary" size="sm" onClick={() => void showQr(l)}>
                     {copy.admin.showQr}
                   </Button>
-                </span>
+                </div>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <Sheet open={qr !== null} onClose={() => setQr(null)} title={qr ? `el papelito de ${qr.name}` : undefined}>
+      <Sheet open={qr !== null} onClose={() => setQr(null)} title={qr ? copy.admin.qrTitle(qr.name) : undefined}>
         {qr && (
-          <div className="flex flex-col items-center gap-3 pb-2">
+          <div className="flex flex-col items-center gap-4 pb-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qr.dataUrl} alt={`qr para ${qr.name}`} width={280} height={280} className="rounded-md border border-line" />
-            <p className="text-center text-sm text-ink-soft">{copy.admin.ghostLinksHint}</p>
+            <img src={qr.dataUrl} alt={copy.admin.qrAlt(qr.name)} width={280} height={280} className="rounded-sm" />
+            <p className="text-center text-sm text-pretty text-ink-soft">{copy.admin.ghostLinksHint}</p>
           </div>
         )}
       </Sheet>

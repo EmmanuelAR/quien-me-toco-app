@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCavos } from "@cavos/kit/react";
 import { takeReturnPath } from "@/components/cavos/useLogin";
 import { Spinner } from "@/components/ui/Spinner";
-import { Marker } from "@/components/ui/Marker";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/lib/copy/es-CR";
 
@@ -32,20 +31,18 @@ export default function AuthCallbackPage() {
   const failed = Boolean(authError) || (waited && !isLoading && !isAuthenticated);
 
   return (
-    <main className="safe-x safe-top safe-bottom flex min-h-dvh flex-col items-center justify-center text-center">
+    <main className="safe-x safe-top safe-bottom mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center text-center">
       {failed ? (
         <>
-          <p className="text-lg">
-            <Marker tone="pink">{copy.auth.callbackError}</Marker>
-          </p>
-          <Button className="mt-6" onClick={() => router.replace(returnTo)}>
+          <p className="text-xl font-semibold text-balance">{copy.auth.callbackError}</p>
+          <Button size="lg" className="mt-8" onClick={() => router.replace(returnTo)}>
             {copy.common.back}
           </Button>
         </>
       ) : (
         <>
-          <Spinner className="size-8" />
-          <p className="mt-4 text-ink-soft">{copy.auth.callbackWorking}</p>
+          <Spinner className="size-8 text-ink-soft" />
+          <p className="mt-4 text-pretty text-ink-soft">{copy.auth.callbackWorking}</p>
         </>
       )}
     </main>

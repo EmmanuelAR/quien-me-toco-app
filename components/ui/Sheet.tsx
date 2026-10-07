@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy/es-CR";
 
@@ -14,6 +14,8 @@ export interface SheetProps {
 
 /** hoja inferior, respeta la barra de abajo del teléfono */
 export function Sheet({ open, onClose, title, children, className }: SheetProps) {
+  const dialog = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -26,6 +28,11 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
     };
   }, [open, onClose]);
 
+  // solo al abrir: onClose cambia en cada render del padre y robaría el foco de los campos
+  useEffect(() => {
+    if (open) dialog.current?.focus();
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -33,21 +40,23 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
       <button
         type="button"
         aria-label={copy.common.close}
-        className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
+        className="animate-fade absolute inset-0 bg-ink/40 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
+        ref={dialog}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         className={cn(
-          "relative w-full max-w-md rounded-t-[20px] bg-white shadow-card animate-rise safe-bottom sm:rounded-[20px]",
-          "px-5 pt-3",
+          "animate-sheet relative w-full max-w-md rounded-t-lg bg-white px-6 pt-3 shadow-float outline-none safe-bottom",
+          "sm:rounded-lg sm:pb-6",
           className,
         )}
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-pill bg-line sm:hidden" aria-hidden="true" />
-        {title && <h2 className="mb-3 text-lg font-semibold">{title}</h2>}
+        <div className="mx-auto mb-5 h-1.5 w-9 rounded-pill bg-line sm:hidden" aria-hidden="true" />
+        {title && <h2 className="mb-5 text-lg font-semibold">{title}</h2>}
         {children}
       </div>
     </div>

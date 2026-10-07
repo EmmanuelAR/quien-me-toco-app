@@ -1,17 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { brand, colors } from "@/lib/brand/tokens";
 import { copy } from "@/lib/copy/es-CR";
 import { Providers } from "@/components/cavos/Providers";
 import { SwRegister } from "@/components/pwa/SwRegister";
-
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -50,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-CR" className={`${inter.variable} h-full antialiased`}>
+    <html lang="es-CR" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
         <SwRegister />

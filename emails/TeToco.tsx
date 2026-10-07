@@ -1,4 +1,5 @@
 import { Button, Section, Text } from "@react-email/components";
+import { colors } from "@/lib/brand/tokens";
 import { BaseEmail, styles } from "./Base";
 
 export interface TeTocoProps {
@@ -15,24 +16,24 @@ export interface TeTocoProps {
 /** el correo que le llega a cada participante con cuenta apenas se hace el sorteo */
 export function TeToco({ appUrl, groupUrl, giverName, receiverName, groupName, when, place, budget }: TeTocoProps) {
   return (
-    <BaseEmail preview={`${giverName}, ya sabemos quién te tocó. shh.`} appUrl={appUrl}>
+    <BaseEmail preview={`${giverName}, ya sabemos quién te tocó. Shh.`} appUrl={appUrl}>
       <Text style={styles.h1}>
-        {giverName}, te tocó <span style={styles.marker("blue")}>{receiverName}</span>
+        {giverName}, te tocó {receiverName}
       </Text>
-      <Text style={styles.text}>shh, no le digás a nadie. en la app ves su wishlist, siempre actualizada.</Text>
-      <Section style={{ margin: "24px 0" }}>
+      <Text style={styles.text}>Shh, no le digás a nadie. En la app ves su wishlist, siempre actualizada.</Text>
+      <Section style={{ margin: "28px 0 36px" }}>
         <Button href={groupUrl} style={styles.button}>
-          abrir la app
+          Abrir la app
         </Button>
       </Section>
-      <Text style={styles.soft}>
-        <span style={styles.marker("pink")}>{groupName}</span>
-      </Text>
-      <Text style={styles.soft}>cuándo: {when}</Text>
-      {place && <Text style={styles.soft}>dónde: {place}</Text>}
-      <Text style={styles.soft}>presupuesto: {budget}</Text>
+      <Section style={{ borderTop: `1px solid ${colors.line}`, paddingTop: "16px" }}>
+        <Text style={styles.label}>{groupName}</Text>
+        <Text style={styles.soft}>Cuándo: {when}</Text>
+        {place && <Text style={styles.soft}>Dónde: {place}</Text>}
+        <Text style={styles.soft}>Presupuesto: {budget}</Text>
+      </Section>
       <Text style={{ ...styles.soft, marginTop: "16px" }}>
-        va adjunto el evento para tu calendario. el día del intercambio quien organiza destapa todo en la app.
+        Va adjunto el evento para tu calendario. El día del intercambio, quien organiza destapa todo en la app.
       </Text>
     </BaseEmail>
   );

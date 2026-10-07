@@ -10,7 +10,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   try {
     const { id } = await ctx.params;
     const groupId = parseGroupId(id);
-    if (!groupId) return json({ error: "grupo inválido" }, 400);
+    if (!groupId) return json({ error: "Grupo inválido." }, 400);
     const group = await verifyAdmin(authFromRequest(req), "email-status", groupId);
     const participants = await readParticipants(groupId);
     return json(await emailSummary(group, participants));
@@ -24,7 +24,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   try {
     const { id } = await ctx.params;
     const groupId = parseGroupId(id);
-    if (!groupId) return json({ error: "grupo inválido" }, 400);
+    if (!groupId) return json({ error: "Grupo inválido." }, 400);
     await verifyAdmin(authFromRequest(req), "emails", groupId);
     return json(await sendDrawEmails(groupId));
   } catch (e) {

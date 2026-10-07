@@ -24,7 +24,7 @@ function WhatsAppIcon() {
 export function ShareInvite({ group }: { group: Group }) {
   const toast = useToast();
   const url = inviteUrl(group);
-  const text = `te invito a "${group.name}": amigo secreto el ${formatDate(group.eventAt)}. apuntate aquí: ${url}`;
+  const text = `Te invito a «${group.name}», el amigo secreto del ${formatDate(group.eventAt)}. Apuntate aquí: ${url}`;
   const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
   const share = async () => {
@@ -41,15 +41,15 @@ export function ShareInvite({ group }: { group: Group }) {
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
-    toast.show(copy.invite.copied, "blue");
+    toast.show(copy.invite.copied, "ok");
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button fullWidth leading={<WhatsAppIcon />} onClick={() => void share()}>
+    <div className="flex flex-col gap-3">
+      <Button size="lg" fullWidth leading={<WhatsAppIcon />} onClick={() => void share()}>
         {copy.invite.whatsapp}
       </Button>
-      <Button fullWidth variant="secondary" onClick={() => void copyLink()}>
+      <Button size="lg" fullWidth variant="secondary" onClick={() => void copyLink()}>
         {copy.invite.copyLink}
       </Button>
     </div>

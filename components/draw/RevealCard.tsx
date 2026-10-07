@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Marker } from "@/components/ui/Marker";
-import { Pill } from "@/components/ui/Pill";
+import { AlertIcon, CheckIcon } from "@/components/ui/icons";
 import { copy } from "@/lib/copy/es-CR";
 import { cn } from "@/lib/cn";
 
@@ -13,7 +12,7 @@ export interface RevealCardProps {
   storageKey: string;
 }
 
-/** la tarjeta "¿quién me tocó?": se toca y destapa el nombre con una animación */
+/** la tarjeta "¿Quién me tocó?": se toca y destapa el nombre, grande y en negro */
 export function RevealCard({ receiverName, sealedOk, storageKey }: RevealCardProps) {
   const [revealed, setRevealed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -33,28 +32,29 @@ export function RevealCard({ receiverName, sealedOk, storageKey }: RevealCardPro
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-md border border-line bg-white p-6 text-center shadow-card transition-transform duration-base ease-soft",
-        animating && !revealed && "scale-[0.97]",
+        "rounded-md bg-surface transition-transform duration-base ease-soft",
+        animating && !revealed && "scale-[0.98]",
       )}
       aria-live="polite"
     >
       {!revealed ? (
-        <button type="button" onClick={reveal} className="flex w-full flex-col items-center gap-3 py-6" aria-label={copy.participant.tap}>
-          <span className="text-2xl font-semibold">
-            <Marker>{copy.participant.reveal}</Marker>
-          </span>
+        <button
+          type="button"
+          onClick={reveal}
+          className="flex min-h-64 w-full flex-col items-center justify-center gap-2 rounded-md px-6 py-12 text-center"
+        >
+          <span className="text-xl font-semibold">{copy.participant.reveal}</span>
           <span className="text-sm text-ink-soft">{copy.participant.tap}</span>
         </button>
       ) : (
-        <div className="animate-pop flex flex-col items-center gap-3 py-4">
+        <div className="animate-reveal flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
           <p className="text-ink-soft">{copy.participant.youGot}</p>
-          <p className="text-2xl font-semibold leading-tight">
-            <Marker tone="pink">{receiverName}</Marker>
-          </p>
-          <p className="text-sm text-ink-soft">{copy.participant.shh}</p>
-          <Pill tone={sealedOk ? "blue" : "pink"} dot className="mt-2">
+          <p className="mt-2 max-w-full text-4xl font-semibold text-balance break-words">{receiverName}</p>
+          <p className="mt-4 text-sm text-ink-soft">{copy.participant.shh}</p>
+          <p className="mt-8 flex items-start gap-1.5 text-left text-sm">
+            {sealedOk ? <CheckIcon className="mt-0.5 size-4" /> : <AlertIcon className="mt-0.5 size-4" />}
             {sealedOk ? copy.participant.verifiedLocal : copy.verify.fail}
-          </Pill>
+          </p>
         </div>
       )}
     </section>

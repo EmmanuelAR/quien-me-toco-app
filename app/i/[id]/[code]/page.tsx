@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const group = /^\d+$/.test(id) ? await readGroupSafe(BigInt(id)).catch(() => null) : null;
   if (!group) return { title: copy.app.name };
   const title = copy.invite.title(group.name);
-  const description = `amigo secreto el ${formatDate(group.eventAt, { timeZone: "America/Costa_Rica" })}. apuntate aquí.`;
+  const description = `Amigo secreto el ${formatDate(group.eventAt, { timeZone: "America/Costa_Rica" })}. Apuntate aquí.`;
   return {
     title,
     description,

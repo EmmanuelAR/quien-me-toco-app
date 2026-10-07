@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { copy } from "@/lib/copy/es-CR";
 import { googleCalendarUrl } from "@/lib/calendar";
@@ -36,18 +36,18 @@ export function AddToCalendar({ group, variant = "secondary" }: { group: Group; 
         {copy.calendar.add}
       </Button>
       <Sheet open={open} onClose={() => setOpen(false)} title={copy.calendar.add}>
-        <div className="space-y-2 pb-2">
+        <div className="space-y-3 pb-2">
           <a
             href={googleCalendarUrl(event)}
             target="_blank"
             rel="noreferrer noopener"
-            className="flex h-12 items-center justify-center rounded-pill bg-ink px-5 font-medium text-white"
+            className={buttonClass({ size: "lg", fullWidth: true })}
           >
             {copy.calendar.google}
           </a>
           <a
             href={`/g/${group.id.toString()}/calendario.ics`}
-            className="flex h-12 items-center justify-center rounded-pill border border-ink px-5 font-medium"
+            className={buttonClass({ variant: "secondary", size: "lg", fullWidth: true })}
           >
             {copy.calendar.ics}
           </a>

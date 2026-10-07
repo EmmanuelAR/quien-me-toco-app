@@ -15,19 +15,19 @@ import { AddToCalendar } from "@/components/share/AddToCalendar";
 import { PayWithFollow } from "@/components/share/PayWithFollow";
 import { ShareInvite, inviteUrl } from "@/components/share/ShareInvite";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { Marker } from "@/components/ui/Marker";
 import { Pill } from "@/components/ui/Pill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
-import { GroupSummary, StatusPill } from "./GroupSummary";
+import { CheckIcon, ChevronRightIcon, CloseIcon } from "@/components/ui/icons";
+import { GroupProgress, GroupSummary } from "./GroupSummary";
 import { calls } from "@/lib/contract/calls";
 import { readParticipants, readReveal } from "@/lib/contract/reads";
 import { GroupStatus, type Exclusion, type Wishlist } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
-import { formatDate } from "@/lib/format";
+import { formatDateTimeLong } from "@/lib/format";
 
 const REVEAL_GRACE = 86400;
 
@@ -79,10 +79,10 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
       try {
         await fn();
         await refresh();
-        if (okMessage) toast.show(okMessage, "blue");
+        if (okMessage) toast.show(okMessage, "ok");
       } catch (e) {
         const m = e instanceof Error ? e.message : String(e);
-        toast.show(/not everyone/i.test(m) ? copy.admin.drawDisabled : copy.common.error, "pink");
+        toast.show(/not everyone/i.test(m) ? copy.admin.drawDisabled : copy.common.error, "error");
       }
     },
     [refresh, toast],
@@ -96,7 +96,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
       await write(calls.requestDraw(groupId));
       const res = await fetch(`/api/groups/${groupId}/draw`, { method: "POST" });
       if (res.status === 422) {
-        toast.show(copy.admin.infeasible, "pink");
+        toast.show(copy.admin.infeasible, "error");
         await write(calls.cancelDrawRequest(groupId));
         setPhase("idle");
         await refresh();
@@ -105,9 +105,9 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
       if (!res.ok && res.status !== 409) throw new Error(`draw ${res.status}`);
       await waitForGroup(groupId, (g) => g.status >= GroupStatus.Drawn);
       await refresh();
-      toast.show(copy.admin.drawn, "blue");
+      toast.show(copy.admin.drawn, "ok");
     } catch {
-      toast.show(copy.common.error, "pink");
+      toast.show(copy.common.error, "error");
     } finally {
       setPhase("idle");
     }
@@ -122,7 +122,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
       await waitForGroup(groupId, (g) => g.status === GroupStatus.Revealed);
       router.push(`/g/${groupId}/revelacion`);
     } catch {
-      toast.show(copy.common.error, "pink");
+      toast.show(copy.common.error, "error");
       setPhase("idle");
     }
   };
@@ -130,7 +130,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   if (loading && !data) {
     return (
       <Page className="items-center justify-center">
-        <Spinner className="size-8" />
+        <Spinner className="size-8 text-ink-soft" />
       </Page>
     );
   }
@@ -138,9 +138,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
     return (
       <Page>
         <AppHeader backHref="/" />
-        <p className="mt-10 text-lg">
-          <Marker tone="pink">{error ? copy.common.error : copy.common.notFound}</Marker>
-        </p>
+        <p className="text-xl font-semibold text-balance">{error ? copy.common.error : copy.common.notFound}</p>
       </Page>
     );
   }
@@ -148,7 +146,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
     return (
       <Page>
         <AppHeader backHref="/" title={group.name} />
-        <Button size="lg" fullWidth className="mt-6" loading={isLoading} onClick={() => setLoginOpen(true)}>
+        <Button size="lg" fullWidth loading={isLoading} onClick={() => setLoginOpen(true)}>
           {copy.auth.enter}
         </Button>
         <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} />
@@ -159,8 +157,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
     return (
       <Page>
         <AppHeader backHref="/" title={group.name} />
-        <p className="mt-6 text-ink-soft">{copy.auth.needLogin}</p>
-        <Link href={`/g/${groupId}`} className="mt-4 flex h-12 items-center justify-center rounded-pill bg-ink px-5 font-medium text-white">
+        <p className="text-lg text-pretty text-ink-soft">{copy.admin.onlyAdmin}</p>
+        <Link href={`/g/${groupId}`} className={`${buttonClass({ size: "lg", fullWidth: true })} mt-8`}>
           {copy.participant.reveal}
         </Link>
       </Page>
@@ -168,6 +166,18 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   }
 
   const s = group.status;
+
+  if (group.archived) {
+    return (
+      <Page>
+        <AppHeader backHref="/" title={group.name} right={<Pill>{copy.status.archived}</Pill>} />
+        <p className="text-lg text-pretty text-ink-soft">{copy.admin.archived}</p>
+        <Button className="mt-8" size="lg" fullWidth loading={busy} onClick={() => void run(() => write(calls.setArchived(groupId, false)))}>
+          {copy.admin.unarchive}
+        </Button>
+      </Page>
+    );
+  }
   const beforeDraw = s === GroupStatus.Open || s === GroupStatus.Closed;
   const missing = Math.max(group.expectedCount - group.participantCount, 0);
   const everyoneIn = group.participantCount === group.expectedCount && group.participantCount >= 3;
@@ -176,45 +186,48 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
 
   return (
     <Page>
-      <AppHeader backHref="/" title={group.name} right={<StatusPill status={s} />} />
+      <AppHeader backHref="/" title={group.name}>
+        <GroupProgress status={s} />
+      </AppHeader>
 
-      {justCreated && s === GroupStatus.Open && (
-        <p className="mb-4 text-lg">
-          <Marker>{copy.create.created}</Marker>
-        </p>
-      )}
+      <div className="space-y-12 pb-12">
+        {justCreated && s === GroupStatus.Open && (
+          <p className="flex items-center gap-2 text-lg font-semibold">
+            <CheckIcon />
+            {copy.create.created}
+          </p>
+        )}
 
-      <div className="space-y-8 pb-10">
         {s === GroupStatus.Open && (
           <section className="space-y-3">
             <ShareInvite group={group} />
-            <p className="keep-case truncate text-center text-xs text-ink-soft">{inviteUrl(group)}</p>
+            <p className="truncate text-center text-xs text-ink-soft">{inviteUrl(group)}</p>
           </section>
         )}
 
         {/* registrados */}
-        <section className="space-y-3" aria-label={copy.admin.registered}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">{copy.admin.registered}</h2>
-            <Pill tone={missing === 0 ? "blue" : "pink"} dot>
-              {copy.admin.expected(group.participantCount, group.expectedCount)}
-            </Pill>
+        <section className="space-y-4" aria-label={copy.admin.registered}>
+          <div>
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-lg font-semibold">{copy.admin.registered}</h2>
+              <span className="text-lg text-ink-soft tabular">{copy.admin.expected(group.participantCount, group.expectedCount)}</span>
+            </div>
+            <p className="mt-1 text-sm text-ink-soft">{copy.admin.missing(missing)}</p>
           </div>
-          <p className="text-sm text-ink-soft">{copy.admin.missing(missing)}</p>
           {accountNames.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
+            <ul className="divide-y divide-line border-y border-line">
               {accountNames.map((p) => (
-                <li key={p.index} className="flex items-center gap-1">
-                  <Pill tone="neutral">{p.name}</Pill>
+                <li key={p.index} className="flex min-h-14 items-center justify-between gap-3">
+                  <span className="min-w-0 truncate">{p.name}</span>
                   {beforeDraw && (
                     <button
                       type="button"
-                      aria-label={`${copy.admin.remove} ${p.name}`}
-                      className="flex size-7 items-center justify-center rounded-pill text-ink-soft hover:bg-surface"
+                      aria-label={copy.admin.removePerson(p.name)}
+                      className="-mr-3 flex size-11 shrink-0 items-center justify-center rounded-pill text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink disabled:opacity-40"
                       onClick={() => void run(() => write(calls.removeParticipant(groupId, p.index)))}
                       disabled={busy}
                     >
-                      ×
+                      <CloseIcon className="size-4" />
                     </button>
                   )}
                 </li>
@@ -223,20 +236,20 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
           )}
           {beforeDraw && (
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" className="h-10 px-4" onClick={() => { setExpectedDraft(String(group.expectedCount)); setExpectedOpen(true); }}>
+              <Button variant="secondary" size="sm" onClick={() => { setExpectedDraft(String(group.expectedCount)); setExpectedOpen(true); }}>
                 {copy.admin.changeExpected}
               </Button>
               {s === GroupStatus.Open ? (
-                <Button variant="secondary" className="h-10 px-4" loading={busy} onClick={() => void run(() => write(calls.closeRegistrations(groupId)))}>
+                <Button variant="secondary" size="sm" loading={busy} onClick={() => void run(() => write(calls.closeRegistrations(groupId)))}>
                   {copy.admin.closeRegistrations}
                 </Button>
               ) : (
-                <Button variant="secondary" className="h-10 px-4" loading={busy} onClick={() => void run(() => write(calls.reopenRegistrations(groupId)))}>
+                <Button variant="secondary" size="sm" loading={busy} onClick={() => void run(() => write(calls.reopenRegistrations(groupId)))}>
                   {copy.admin.reopenRegistrations}
                 </Button>
               )}
               {!amParticipant && s === GroupStatus.Open && (
-                <Link href={inviteUrl(group).replace(/^https?:\/\/[^/]+/, "")} className="inline-flex h-10 items-center rounded-pill border border-ink px-4 text-base font-medium">
+                <Link href={inviteUrl(group).replace(/^https?:\/\/[^/]+/, "")} className={buttonClass({ variant: "secondary", size: "sm" })}>
                   {copy.admin.iAlsoPlay}
                 </Link>
               )}
@@ -258,7 +271,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
 
         {/* exclusiones */}
         {s < GroupStatus.Drawn && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <ExclusionsEditor
               participants={participants}
               exclusions={exclusions}
@@ -269,11 +282,11 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
               onFeasibility={setFeasible}
             />
             {group.previousGroupId !== 0n && beforeDraw && (
-              <label className="flex items-center justify-between gap-3 rounded-md border border-line p-4">
-                <span className="text-sm">{copy.create.avoidPrevious}</span>
+              <label className="flex min-h-14 items-center justify-between gap-4 border-y border-line py-3">
+                <span className="text-pretty">{copy.create.avoidPrevious}</span>
                 <input
                   type="checkbox"
-                  className="size-5 accent-ink"
+                  className="size-5 shrink-0 accent-ink"
                   checked={group.avoidPrevious}
                   disabled={busy}
                   onChange={(e) => void run(() => write(calls.setAvoidPrevious(groupId, e.target.checked)))}
@@ -287,8 +300,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
         {s < GroupStatus.Drawn && (
           <section className="space-y-3" aria-label={copy.admin.draw}>
             {phase === "drawing" || s === GroupStatus.DrawRequested ? (
-              <div className="flex items-center gap-3 rounded-md border border-line p-4">
-                <Spinner />
+              <div className="flex items-center gap-3 rounded-md bg-surface p-5">
+                <Spinner className="text-ink-soft" />
                 <span>{copy.admin.drawing}</span>
               </div>
             ) : (
@@ -309,17 +322,18 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
 
         {s >= GroupStatus.Drawn && (
           <>
-            <section className="rounded-md border border-line bg-white p-4 shadow-card">
-              <p>{s === GroupStatus.Revealed ? copy.admin.revealed : copy.admin.drawn}</p>
-            </section>
+            <p className="flex items-start gap-2 text-lg text-pretty">
+              <CheckIcon className="mt-1" />
+              {s === GroupStatus.Revealed ? copy.admin.revealed : copy.admin.drawn}
+            </p>
 
             <AfterDrawPanel group={group} />
 
             {s !== GroupStatus.Revealed && (
-              <section className="space-y-2" aria-label={copy.admin.reveal}>
+              <section className="space-y-3" aria-label={copy.admin.reveal}>
                 {phase === "revealing" || s === GroupStatus.RevealRequested ? (
-                  <div className="flex items-center gap-3 rounded-md border border-line p-4">
-                    <Spinner />
+                  <div className="flex items-center gap-3 rounded-md bg-surface p-5">
+                    <Spinner className="text-ink-soft" />
                     <span>{copy.admin.revealing}</span>
                   </div>
                 ) : (
@@ -327,8 +341,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
                     {copy.admin.reveal}
                   </Button>
                 )}
-                <p className="text-center text-sm text-ink-soft">
-                  {canRevealNow ? copy.admin.revealHint : copy.admin.revealTooEarly(formatDate(group.eventAt - REVEAL_GRACE, { withTime: true }))}
+                <p className="text-center text-sm text-pretty text-ink-soft">
+                  {canRevealNow ? copy.admin.revealHint : copy.admin.revealTooEarly(formatDateTimeLong(group.eventAt - REVEAL_GRACE))}
                 </p>
                 {s === GroupStatus.RevealRequested && phase !== "revealing" && (
                   <Button variant="ghost" fullWidth onClick={() => void fetch(`/api/groups/${groupId}/reveal`, { method: "POST" }).then(() => refresh())}>
@@ -338,7 +352,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
               </section>
             )}
             {s === GroupStatus.Revealed && (
-              <Link href={`/g/${groupId}/revelacion`} className="flex h-12 items-center justify-center rounded-pill bg-ink px-5 font-medium text-white">
+              <Link href={`/g/${groupId}/revelacion`} className={buttonClass({ size: "lg", fullWidth: true })}>
                 {copy.finalReveal.sub}
               </Link>
             )}
@@ -346,20 +360,28 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
           </>
         )}
 
-        <GroupSummary group={group} compact />
-        <div className="flex flex-col gap-2">
+        <section className="space-y-4">
+          <GroupSummary group={group} />
           <AddToCalendar group={group} />
           {amParticipant && (
-            <Link href={`/g/${groupId}`} className="text-center text-sm underline decoration-marker-blue decoration-2 underline-offset-4">
+            <Link href={`/g/${groupId}`} className="link flex items-center justify-center gap-1 py-2">
               {copy.participant.reveal}
+              <ChevronRightIcon className="size-4" />
             </Link>
           )}
-        </div>
+        </section>
+
+        <section className="space-y-2 border-t border-line pt-6">
+          <Button variant="ghost" fullWidth loading={busy} onClick={() => void run(() => write(calls.setArchived(groupId, true)))}>
+            {copy.admin.archive}
+          </Button>
+          <p className="text-center text-sm text-pretty text-ink-soft">{copy.admin.archiveHint}</p>
+        </section>
       </div>
 
       <Sheet open={expectedOpen} onClose={() => setExpectedOpen(false)} title={copy.admin.changeExpected}>
         <form
-          className="space-y-4 pb-2"
+          className="space-y-5 pb-2"
           onSubmit={(e) => {
             e.preventDefault();
             const n = Number(expectedDraft);
@@ -369,14 +391,14 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
           }}
         >
           <Field label={copy.create.expected} type="number" inputMode="numeric" min={Math.max(3, group.participantCount)} value={expectedDraft} onChange={(e) => setExpectedDraft(e.target.value)} hint={copy.create.expectedHint} />
-          <Button type="submit" fullWidth loading={busy}>
+          <Button type="submit" size="lg" fullWidth loading={busy}>
             {copy.wishlist.save}
           </Button>
         </form>
       </Sheet>
 
       <Sheet open={confirmDraw} onClose={() => setConfirmDraw(false)} title={copy.admin.draw}>
-        <p className="mb-4">{copy.admin.drawConfirm}</p>
+        <p className="mb-6 text-pretty">{copy.admin.drawConfirm}</p>
         <div className="flex gap-2 pb-2">
           <Button fullWidth onClick={() => void doDraw()}>
             {copy.common.yes}

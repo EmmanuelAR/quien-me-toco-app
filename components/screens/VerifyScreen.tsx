@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useGroup } from "@/components/data/useGroup";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
-import { Marker } from "@/components/ui/Marker";
 import { Pill } from "@/components/ui/Pill";
 import { Spinner } from "@/components/ui/Spinner";
+import { AlertIcon, CheckCircleIcon } from "@/components/ui/icons";
 import { findGroupEvent, type FoundEvent } from "@/lib/contract/events";
 import { readCommitments, readReveal } from "@/lib/contract/reads";
 import { GroupStatus } from "@/lib/contract/types";
@@ -16,15 +16,6 @@ import { copy } from "@/lib/copy/es-CR";
 import { formatDateTimeLong } from "@/lib/format";
 
 type Check = { kind: "checking" } | { kind: "pending"; seals: number } | { kind: "ok"; seals: number } | { kind: "fail"; seals: number; bad: number[] };
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-10" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M7 12.5l3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /**
  * "verificá que el sorteo fue justo": recalcula cada sello con lo que publicó la
@@ -58,7 +49,7 @@ export function VerifyScreen({ groupId }: { groupId: bigint }) {
   if (loading && !data) {
     return (
       <Page className="items-center justify-center">
-        <Spinner className="size-8" />
+        <Spinner className="size-8 text-ink-soft" />
       </Page>
     );
   }
@@ -66,89 +57,85 @@ export function VerifyScreen({ groupId }: { groupId: bigint }) {
     return (
       <Page>
         <AppHeader backHref="/" />
-        <p className="mt-10 text-lg">
-          <Marker tone="pink">{error ? copy.common.error : copy.common.notFound}</Marker>
-        </p>
+        <p className="text-xl font-semibold text-balance">{error ? copy.common.error : copy.common.notFound}</p>
       </Page>
     );
   }
 
   return (
     <Page>
-      <AppHeader backHref={`/g/${groupId}/revelacion`} title={group.name} />
-      <section className="space-y-4 pb-10">
-        <h2 className="text-2xl font-semibold leading-tight">
-          <Marker>{copy.verify.title}</Marker>
-        </h2>
+      <AppHeader backHref={`/g/${groupId}/revelacion`} eyebrow={group.name} title={copy.verify.title} />
+      <div className="space-y-12 pb-12">
         <p className="text-pretty text-ink-soft">{copy.verify.intro}</p>
 
-        <div className="rounded-md border border-line bg-white p-5 text-center shadow-card">
+        <section className="rounded-md bg-surface px-6 py-10 text-center">
           {check.kind === "checking" ? (
             <div className="flex items-center justify-center gap-2 text-ink-soft">
               <Spinner className="size-4" /> {copy.verify.checking}
             </div>
           ) : check.kind === "pending" ? (
-            <p className="text-ink-soft">{copy.verify.pending}</p>
+            <p className="text-pretty text-ink-soft">{copy.verify.pending}</p>
           ) : check.kind === "ok" ? (
-            <div className="animate-pop flex flex-col items-center gap-2">
-              <CheckIcon />
-              <p className="text-lg font-semibold">
-                <Marker>{copy.verify.ok}</Marker>
-              </p>
-              <Pill tone="blue">{copy.verify.seals(check.seals)}</Pill>
+            <div className="animate-reveal flex flex-col items-center gap-3">
+              <CheckCircleIcon className="size-12" strokeWidth={1.5} />
+              <p className="text-xl font-semibold text-balance">{copy.verify.ok}</p>
+              <Pill className="bg-white">{copy.verify.seals(check.seals)}</Pill>
             </div>
           ) : (
-            <p className="text-lg">
-              <Marker tone="pink">{copy.verify.fail}</Marker>
-            </p>
-          )}
-        </div>
-
-        <dl className="space-y-2 text-sm">
-          {group.drawnAt > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <dt className="text-ink-soft">{copy.verify.sealedAt(formatDateTimeLong(group.drawnAt))}</dt>
-              <dd>
-                {drawTx ? (
-                  <a className="keep-case underline decoration-marker-blue decoration-2 underline-offset-4" href={explorerTxUrl(drawTx.transactionHash)} target="_blank" rel="noreferrer noopener">
-                    {copy.verify.explorerDraw}
-                  </a>
-                ) : (
-                  <span className="text-ink-soft">…</span>
-                )}
-              </dd>
+            <div className="flex flex-col items-center gap-3">
+              <AlertIcon className="size-12" strokeWidth={1.5} />
+              <p className="text-xl font-semibold text-balance">{copy.verify.fail}</p>
             </div>
           )}
-          {group.revealedAt > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <dt className="text-ink-soft">{copy.verify.revealedAt(formatDateTimeLong(group.revealedAt))}</dt>
-              <dd>
-                {revealTx ? (
-                  <a className="keep-case underline decoration-marker-pink decoration-2 underline-offset-4" href={explorerTxUrl(revealTx.transactionHash)} target="_blank" rel="noreferrer noopener">
-                    {copy.verify.explorerReveal}
-                  </a>
-                ) : (
-                  <span className="text-ink-soft">…</span>
-                )}
-              </dd>
-            </div>
-          )}
-        </dl>
+        </section>
 
-        <section className="space-y-2">
-          <h3 className="font-semibold">{copy.verify.howTitle}</h3>
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-ink-soft">
+        {(group.drawnAt > 0 || group.revealedAt > 0) && (
+          <dl className="divide-y divide-line border-y border-line">
+            {group.drawnAt > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3.5">
+                <dt className="text-ink-soft">{copy.verify.sealedAt(formatDateTimeLong(group.drawnAt))}</dt>
+                <dd>
+                  {drawTx ? (
+                    <a className="link" href={explorerTxUrl(drawTx.transactionHash)} target="_blank" rel="noreferrer noopener">
+                      {copy.verify.explorerDraw}
+                    </a>
+                  ) : (
+                    <span className="text-ink-soft">…</span>
+                  )}
+                </dd>
+              </div>
+            )}
+            {group.revealedAt > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3.5">
+                <dt className="text-ink-soft">{copy.verify.revealedAt(formatDateTimeLong(group.revealedAt))}</dt>
+                <dd>
+                  {revealTx ? (
+                    <a className="link" href={explorerTxUrl(revealTx.transactionHash)} target="_blank" rel="noreferrer noopener">
+                      {copy.verify.explorerReveal}
+                    </a>
+                  ) : (
+                    <span className="text-ink-soft">…</span>
+                  )}
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">{copy.verify.howTitle}</h2>
+          <ol className="list-decimal space-y-2 pl-5 text-pretty text-ink-soft marker:text-ink">
             {copy.verify.how.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ol>
           {publicEnv.contractAddress && (
-            <a className="keep-case block text-xs text-ink-soft underline underline-offset-4" href={explorerContractUrl(publicEnv.contractAddress)} target="_blank" rel="noreferrer noopener">
-              {copy.verify.explorerDraw.replace("el sorteo", "el contrato")}
+            <a className="link inline-block text-sm" href={explorerContractUrl(publicEnv.contractAddress)} target="_blank" rel="noreferrer noopener">
+              {copy.verify.explorerContract}
             </a>
           )}
         </section>
-      </section>
+      </div>
     </Page>
   );
 }
