@@ -92,6 +92,9 @@ export const calls = {
   requestReveal(groupId: bigint): Call {
     return call("request_reveal", { group_id: groupId });
   },
+  setArchived(groupId: bigint, archived: boolean): Call {
+    return call("set_archived", { group_id: groupId, archived });
+  },
 
   join(groupId: bigint, inviteCode: bigint, name: string, encPubkey: Uint8Array, emailCommit: Uint8Array, wishlist: Wishlist): Call {
     return call("join", {

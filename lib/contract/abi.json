@@ -454,6 +454,22 @@
       },
       {
         "type": "function",
+        "name": "set_archived",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "archived",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
         "name": "join",
         "inputs": [
           {
@@ -627,6 +643,22 @@
         "outputs": [
           {
             "type": "quien_me_toco::types::Group"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_archived",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
           }
         ],
         "state_mutability": "view"
@@ -1150,6 +1182,23 @@
   },
   {
     "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::GroupArchived",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "archived",
+        "type": "core::bool",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
     "name": "quien_me_toco::quien_me_toco::QuienMeToco::Event",
     "kind": "enum",
     "variants": [
@@ -1226,6 +1275,11 @@
       {
         "name": "OperatorChanged",
         "type": "quien_me_toco::quien_me_toco::QuienMeToco::OperatorChanged",
+        "kind": "nested"
+      },
+      {
+        "name": "GroupArchived",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::GroupArchived",
         "kind": "nested"
       }
     ]

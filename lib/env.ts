@@ -5,6 +5,7 @@ export const SEPOLIA_RPC_FALLBACK = "https://api.zan.top/public/starknet-sepolia
 export const publicEnv = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   cavosAppId: process.env.NEXT_PUBLIC_CAVOS_APP_ID ?? "",
+  cavosEnvironment: process.env.NEXT_PUBLIC_CAVOS_ENVIRONMENT === "production" ? "production" : "development",
   cavosPaymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY ?? "",
   rpcUrl: process.env.NEXT_PUBLIC_STARKNET_RPC_URL ?? SEPOLIA_RPC_FALLBACK,
   contractAddress: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "",

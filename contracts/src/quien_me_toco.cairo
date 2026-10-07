@@ -44,6 +44,8 @@ pub mod QuienMeToco {
         ct_version: Map<(u64, u32), u32>,
         groups_of_admin: Map<ContractAddress, Vec<u64>>,
         groups_of_participant: Map<ContractAddress, Vec<u64>>,
+        /// apagado: el grupo sigue en la cadena, pero la app no lo muestra
+        archived: Map<u64, bool>,
     }
 
     #[event]
@@ -64,6 +66,7 @@ pub mod QuienMeToco {
         RevealRequested: RevealRequested,
         Revealed: Revealed,
         OperatorChanged: OperatorChanged,
+        GroupArchived: GroupArchived,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -153,6 +156,12 @@ pub mod QuienMeToco {
     pub struct OperatorChanged {
         pub operator: ContractAddress,
     }
+    #[derive(Drop, starknet::Event)]
+    pub struct GroupArchived {
+        #[key]
+        pub group_id: u64,
+        pub archived: bool,
+    }
 
     pub mod errors {
         pub const NOT_OWNER: felt252 = 'not owner';
@@ -189,6 +198,7 @@ pub mod QuienMeToco {
         pub const COMMITMENT: felt252 = 'commitment mismatch';
         pub const PREV_NOT_REVEALED: felt252 = 'previous not revealed';
         pub const ONLY_GHOST_BY_ADMIN: felt252 = 'admin edits ghosts only';
+        pub const ARCHIVED: felt252 = 'group archived';
     }
 
     #[constructor]
@@ -349,6 +359,7 @@ pub mod QuienMeToco {
         fn add_ghost(
             ref self: ContractState, group_id: u64, name: ByteArray, wishlist: Wishlist,
         ) -> u32 {
+            self.ensure_live(group_id);
             let g = self.admin_group(group_id);
             assert(g.status == status::OPEN || g.status == status::CLOSED, errors::DRAW_LOCKED);
             assert(name.len() > 0, errors::NAME_REQUIRED);
@@ -392,6 +403,7 @@ pub mod QuienMeToco {
         }
 
         fn request_draw(ref self: ContractState, group_id: u64) {
+            self.ensure_live(group_id);
             let mut g = self.admin_group(group_id);
             assert(g.status == status::OPEN || g.status == status::CLOSED, errors::DRAW_LOCKED);
             let n = self.participant_count.entry(group_id).read();
@@ -410,7 +422,14 @@ pub mod QuienMeToco {
             self.emit(DrawCancelled { group_id });
         }
 
+        fn set_archived(ref self: ContractState, group_id: u64, archived: bool) {
+            let _g = self.admin_group(group_id);
+            self.archived.entry(group_id).write(archived);
+            self.emit(GroupArchived { group_id, archived });
+        }
+
         fn request_reveal(ref self: ContractState, group_id: u64) {
+            self.ensure_live(group_id);
             let mut g = self.admin_group(group_id);
             assert(g.status == status::DRAWN, errors::NOT_DRAWN);
             let now = get_block_timestamp();
@@ -431,6 +450,7 @@ pub mod QuienMeToco {
             wishlist: Wishlist,
         ) -> u32 {
             let caller = get_caller_address();
+            self.ensure_live(group_id);
             let g = self.group_or_panic(group_id);
             assert(g.status == status::OPEN, errors::NOT_OPEN);
             assert(g.invite_code == invite_code, errors::BAD_INVITE);
@@ -450,6 +470,7 @@ pub mod QuienMeToco {
         }
 
         fn update_wishlist(ref self: ContractState, group_id: u64, index: u32, wishlist: Wishlist) {
+            self.ensure_live(group_id);
             let caller = get_caller_address();
             let g = self.group_or_panic(group_id);
             assert(g.status != status::REVEALED, errors::ALREADY_REVEALED);
@@ -489,6 +510,7 @@ pub mod QuienMeToco {
             sealed_reveal: ByteArray,
         ) {
             self.only_operator();
+            self.ensure_live(group_id);
             let mut g = self.group_or_panic(group_id);
             assert(g.status == status::DRAW_REQUESTED, errors::NOT_DRAW_REQUESTED);
             let n = self.participant_count.entry(group_id).read();
@@ -572,6 +594,11 @@ pub mod QuienMeToco {
 
         fn get_group(self: @ContractState, group_id: u64) -> Group {
             self.group_or_panic(group_id)
+        }
+
+        fn is_archived(self: @ContractState, group_id: u64) -> bool {
+            let _g = self.group_or_panic(group_id);
+            self.archived.entry(group_id).read()
         }
 
         fn get_participant_count(self: @ContractState, group_id: u64) -> u32 {
@@ -720,6 +747,10 @@ pub mod QuienMeToco {
             let g = self.group_or_panic(group_id);
             assert(get_caller_address() == g.admin, errors::NOT_ADMIN);
             g
+        }
+
+        fn ensure_live(self: @ContractState, group_id: u64) {
+            assert(!self.archived.entry(group_id).read(), errors::ARCHIVED);
         }
 
         fn is_excluded(self: @ContractState, group_id: u64, a: u32, b: u32) -> bool {

@@ -29,6 +29,8 @@ export interface Group {
   drawnAt: number;
   revealedAt: number;
   participantCount: number;
+  /** apagado: no se muestra en las listas */
+  archived: boolean;
 }
 
 export interface Participant {

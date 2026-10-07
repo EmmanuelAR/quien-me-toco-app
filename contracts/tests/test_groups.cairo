@@ -326,3 +326,34 @@ fn create_with_previous_requires_same_admin() {
     as_caller(c, stranger());
     c.create_group("copia", EVENT_AT, "", 1, 2, 'CRC', "", 3, 'x', id);
 }
+
+#[test]
+fn archive_marks_the_group() {
+    let c = deploy();
+    let id = create_group(c, 4);
+    as_caller(c, admin());
+    c.set_archived(id, true);
+    assert(c.is_archived(id), 'archived');
+}
+
+#[test]
+#[should_panic(expected: 'group archived')]
+fn archived_group_rejects_join() {
+    let c = deploy();
+    let id = create_group(c, 4);
+    as_caller(c, admin());
+    c.set_archived(id, true);
+    stop(c);
+    as_caller(c, ana());
+    c.join(id, INVITE, "ana", 1, 0, wishlist(""));
+}
+
+#[test]
+fn unarchive_lets_the_group_live() {
+    let c = deploy();
+    let id = create_group(c, 4);
+    as_caller(c, admin());
+    c.set_archived(id, true);
+    c.set_archived(id, false);
+    assert(!c.is_archived(id), 'live');
+}

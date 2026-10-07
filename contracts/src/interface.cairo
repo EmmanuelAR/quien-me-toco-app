@@ -41,6 +41,8 @@ pub trait IQuienMeToco<TContractState> {
     fn request_draw(ref self: TContractState, group_id: u64);
     fn cancel_draw_request(ref self: TContractState, group_id: u64);
     fn request_reveal(ref self: TContractState, group_id: u64);
+    /// apaga el grupo. sigue en la cadena, la app lo esconde.
+    fn set_archived(ref self: TContractState, group_id: u64, archived: bool);
 
     // ---- participante (caller == participant.account) ----
     fn join(
@@ -72,6 +74,7 @@ pub trait IQuienMeToco<TContractState> {
     // ---- lecturas ----
     fn get_operator(self: @TContractState) -> ContractAddress;
     fn get_group(self: @TContractState, group_id: u64) -> Group;
+    fn is_archived(self: @TContractState, group_id: u64) -> bool;
     fn get_participant_count(self: @TContractState, group_id: u64) -> u32;
     fn get_participant(self: @TContractState, group_id: u64, index: u32) -> Participant;
     fn get_participants(self: @TContractState, group_id: u64) -> Array<Participant>;

@@ -38,7 +38,7 @@ echo "→ scarb build"
 scarb build
 
 echo "→ declare"
-DECLARE_OUT=$(sncast --account "$ACCOUNT" --url "$RPC_URL" declare --contract-name QuienMeToco 2>&1 || true)
+DECLARE_OUT=$(sncast --account "$ACCOUNT" declare --url "$RPC_URL" --contract-name QuienMeToco 2>&1 || true)
 echo "$DECLARE_OUT"
 CLASS_HASH=$(echo "$DECLARE_OUT" | grep -ioE 'class[_ ]hash:? *0x[0-9a-f]+' | grep -ioE '0x[0-9a-f]+' | head -1 || true)
 if [ -z "$CLASS_HASH" ]; then
@@ -52,9 +52,9 @@ fi
 echo "class hash: $CLASS_HASH"
 
 echo "→ deploy"
-DEPLOY_OUT=$(sncast --account "$ACCOUNT" --url "$RPC_URL" deploy \
+DEPLOY_OUT=$(sncast --account "$ACCOUNT" deploy --url "$RPC_URL" \
   --class-hash "$CLASS_HASH" \
-  --constructor-calldata "$OWNER" "$OPERATOR" 2>&1)
+  --constructor-calldata "$OWNER" "$OPERATOR" 2>&1 || true)
 echo "$DEPLOY_OUT"
 CONTRACT_ADDRESS=$(echo "$DEPLOY_OUT" | grep -ioE 'contract[_ ]address:? *0x[0-9a-f]+' | grep -ioE '0x[0-9a-f]+' | head -1 || true)
 

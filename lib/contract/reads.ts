@@ -29,7 +29,7 @@ function toText(v: unknown): string {
   return typeof v === "string" ? v : String(v ?? "");
 }
 
-function decodeGroup(id: bigint, raw: Record<string, unknown>, participantCount: number): Group {
+function decodeGroup(id: bigint, raw: Record<string, unknown>, participantCount: number, archived: boolean): Group {
   return {
     id,
     admin: toAddress(raw.admin),
@@ -48,6 +48,7 @@ function decodeGroup(id: bigint, raw: Record<string, unknown>, participantCount:
     drawnAt: toNumber(raw.drawn_at),
     revealedAt: toNumber(raw.revealed_at),
     participantCount,
+    archived,
   };
 }
 
@@ -80,11 +81,12 @@ function decodeWishlist(raw: Record<string, unknown>): Wishlist {
 
 export async function readGroup(groupId: bigint): Promise<Group> {
   const c = getContract();
-  const [raw, count] = await Promise.all([
+  const [raw, count, archived] = await Promise.all([
     c.call("get_group", [groupId]) as Promise<Record<string, unknown>>,
     c.call("get_participant_count", [groupId]) as Promise<bigint>,
+    c.call("is_archived", [groupId]) as Promise<boolean>,
   ]);
-  return decodeGroup(groupId, raw, toNumber(count));
+  return decodeGroup(groupId, raw, toNumber(count), Boolean(archived));
 }
 
 /** null si el grupo no existe */

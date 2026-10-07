@@ -95,3 +95,13 @@ describe("helpers de invitación y bytes", () => {
     expect(decodeByteArrayFelts(data.slice(2))).toEqual(ct);
   });
 });
+
+describe("rpc con límite", () => {
+  it("reconoce el corte de zan y un 429", async () => {
+    vi.stubEnv("NEXT_PUBLIC_CONTRACT_ADDRESS", ADDRESS);
+    const { rpcResponseIsRateLimited } = await import("@/lib/contract/client");
+    expect(rpcResponseIsRateLimited(200, '{"code":-32011,"message":"cu limit exceeded; Request too fast per second."}')).toBe(true);
+    expect(rpcResponseIsRateLimited(429, "slow down")).toBe(true);
+    expect(rpcResponseIsRateLimited(200, '{"result":["0x1"]}')).toBe(false);
+  });
+});

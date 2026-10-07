@@ -11,6 +11,7 @@ import { CAVOS_APP_SALT, publicEnv } from "@/lib/env";
  */
 export const cavosConfig: CavosConfig = {
   appId: publicEnv.cavosAppId || undefined,
+  environment: publicEnv.cavosEnvironment,
   chains: ["starknet"],
   defaultChain: "starknet",
   network: "testnet",
