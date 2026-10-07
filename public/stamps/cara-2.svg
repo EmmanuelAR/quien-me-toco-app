@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" stroke="#111111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- placeholder: carita 2. reemplazar por la ilustracion final de ear.dev -->
+  <path d="M41 9c16 1 29 14 29 31S57 72 40 72 10 59 10 41 24 8 41 9z"/>
+  <path d="M27 36l7-2"/>
+  <path d="M46 34l7 2"/>
+  <path d="M30 52c5 3 12 3 20-4"/>
+  <path d="M50 48l4 3"/>
+</svg>

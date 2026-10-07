@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/*
+  design tokens de ear.dev — fuente de verdad para la app.
+  lib/brand/tokens.ts es el espejo en TS (para next/og y los correos);
+  tests/brand.test.ts comprueba que los dos coincidan.
+*/
+@theme {
+  --color-*: initial;
+  --color-bg: #ffffff;
+  --color-ink: #111111;
+  --color-ink-soft: #6b6b6b;
+  --color-line: #e8e8e8;
+  --color-surface: #fafafa;
+  --color-marker-blue: #a4c7f1;
+  --color-marker-pink: #f1a4a6;
+  --color-marker-blue-soft: #e4eefb;
+  --color-marker-pink-soft: #fbe4e5;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.75rem;
+  --text-xl--line-height: 2.125rem;
+  --text-2xl: 2.5rem;
+  --text-2xl--line-height: 2.75rem;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.04);
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-reveal: 900ms;
+
+  --animate-pop: pop var(--duration-reveal) var(--ease-soft) both;
+  --animate-rise: rise var(--duration-base) var(--ease-soft) both;
+  --animate-wiggle: wiggle 1.4s ease-in-out infinite;
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.85) translateY(12px);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.03) translateY(0);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(4deg);
+    }
+  }
+}
+
+/* estilos base dentro de la capa base: así las utilidades de tailwind siempre ganan */
+@layer base {
+  :root {
+    color-scheme: light only;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  html {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    min-height: 100dvh;
+    text-transform: lowercase;
+    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.01em;
+  }
+
+  /* links, códigos y correos conservan su caja */
+  .keep-case,
+  input,
+  textarea,
+  code,
+  a[href^="http"] {
+    text-transform: none;
+  }
+
+  ::selection {
+    background: var(--color-marker-blue);
+    color: var(--color-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
+
+@utility marker {
+  background-color: var(--color-marker-blue);
+  padding: 0.05em 0.18em;
+  margin: 0 -0.05em;
+  border-radius: 0.2em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@utility marker-pink {
+  background-color: var(--color-marker-pink);
+}
+
+@utility safe-x {
+  padding-left: max(1.25rem, var(--safe-left));
+  padding-right: max(1.25rem, var(--safe-right));
+}
+
+@utility safe-top {
+  padding-top: max(1rem, var(--safe-top));
+}
+
+@utility safe-bottom {
+  padding-bottom: max(1rem, var(--safe-bottom));
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}

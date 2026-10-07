@@ -1,0 +1,1233 @@
+[
+  {
+    "type": "impl",
+    "name": "QuienMeTocoImpl",
+    "interface_name": "quien_me_toco::interface::IQuienMeToco"
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::internal::bounded_int::BoundedInt::<0, 30>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "quien_me_toco::types::Exclusion",
+    "members": [
+      {
+        "name": "a",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "b",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "quien_me_toco::types::Wishlist",
+    "members": [
+      {
+        "name": "ideas",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "sizes",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "links",
+        "type": "core::byte_array::ByteArray"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "quien_me_toco::types::Group",
+    "members": [
+      {
+        "name": "admin",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "event_at",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "place",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "budget_min",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "budget_max",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "currency",
+        "type": "core::felt252"
+      },
+      {
+        "name": "rules",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "expected_count",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "invite_code",
+        "type": "core::felt252"
+      },
+      {
+        "name": "previous_group_id",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "avoid_previous",
+        "type": "core::bool"
+      },
+      {
+        "name": "status",
+        "type": "core::integer::u8"
+      },
+      {
+        "name": "drawn_at",
+        "type": "core::integer::u64"
+      },
+      {
+        "name": "revealed_at",
+        "type": "core::integer::u64"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "quien_me_toco::types::Participant",
+    "members": [
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "name",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "name": "enc_pubkey",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "email_commit",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "is_ghost",
+        "type": "core::bool"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::integer::u32>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "core::integer::u32"
+      },
+      {
+        "name": "None",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "quien_me_toco::interface::IQuienMeToco",
+    "items": [
+      {
+        "type": "function",
+        "name": "create_group",
+        "inputs": [
+          {
+            "name": "name",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "event_at",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "place",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "budget_min",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "budget_max",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "currency",
+            "type": "core::felt252"
+          },
+          {
+            "name": "rules",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "expected_count",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "invite_code",
+            "type": "core::felt252"
+          },
+          {
+            "name": "previous_group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "clone_group",
+        "inputs": [
+          {
+            "name": "previous_group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "event_at",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "invite_code",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u64"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "update_group",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "name",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "event_at",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "place",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "budget_min",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "budget_max",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "rules",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_expected_count",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "count",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "close_registrations",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "reopen_registrations",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_exclusions",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "pairs",
+            "type": "core::array::Array::<quien_me_toco::types::Exclusion>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_avoid_previous",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "enabled",
+            "type": "core::bool"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "add_ghost",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "name",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "wishlist",
+            "type": "quien_me_toco::types::Wishlist"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "remove_participant",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "request_draw",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "cancel_draw_request",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "request_reveal",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "join",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "invite_code",
+            "type": "core::felt252"
+          },
+          {
+            "name": "name",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "enc_pubkey",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "email_commit",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "wishlist",
+            "type": "quien_me_toco::types::Wishlist"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "update_wishlist",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "wishlist",
+            "type": "quien_me_toco::types::Wishlist"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "rotate_enc_pubkey",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "new_pubkey",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "publish_draw",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "commitments",
+            "type": "core::array::Array::<core::felt252>"
+          },
+          {
+            "name": "ciphertexts",
+            "type": "core::array::Array::<core::byte_array::ByteArray>"
+          },
+          {
+            "name": "sealed_reveal",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "update_ciphertext",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "ciphertext",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "reveal",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "receivers",
+            "type": "core::array::Array::<core::integer::u32>"
+          },
+          {
+            "name": "salts",
+            "type": "core::array::Array::<core::felt252>"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_operator",
+        "inputs": [
+          {
+            "name": "operator",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_operator",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_group",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "quien_me_toco::types::Group"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_participant_count",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_participant",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "quien_me_toco::types::Participant"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_participants",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<quien_me_toco::types::Participant>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_participant_index",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::option::Option::<core::integer::u32>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_wishlist",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "quien_me_toco::types::Wishlist"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_exclusions",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<quien_me_toco::types::Exclusion>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_ciphertext",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_commitments",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::felt252>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_sealed_reveal",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_reveal",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::array::Array::<core::integer::u32>, core::array::Array::<core::felt252>)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_key_versions",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::integer::u32, core::integer::u32)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "groups_of_admin",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u64>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "groups_of_participant",
+        "inputs": [
+          {
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Array::<core::integer::u64>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "verify_commitment",
+        "inputs": [
+          {
+            "name": "group_id",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "index",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "receiver",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "salt",
+            "type": "core::felt252"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "operator",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::GroupCreated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "admin",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "previous_group_id",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::Joined",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "account",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::GhostAdded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::ParticipantRemoved",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::RegistrationsClosed",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::RegistrationsReopened",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::ExclusionsSet",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "count",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::DrawRequested",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::DrawCancelled",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::DrawPublished",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "drawn_at",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::KeyRotated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "version",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::CiphertextUpdated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "version",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::RevealRequested",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::Revealed",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "group_id",
+        "type": "core::integer::u64",
+        "kind": "key"
+      },
+      {
+        "name": "revealed_at",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::OperatorChanged",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "operator",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "quien_me_toco::quien_me_toco::QuienMeToco::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "GroupCreated",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::GroupCreated",
+        "kind": "nested"
+      },
+      {
+        "name": "Joined",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::Joined",
+        "kind": "nested"
+      },
+      {
+        "name": "GhostAdded",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::GhostAdded",
+        "kind": "nested"
+      },
+      {
+        "name": "ParticipantRemoved",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::ParticipantRemoved",
+        "kind": "nested"
+      },
+      {
+        "name": "RegistrationsClosed",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::RegistrationsClosed",
+        "kind": "nested"
+      },
+      {
+        "name": "RegistrationsReopened",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::RegistrationsReopened",
+        "kind": "nested"
+      },
+      {
+        "name": "ExclusionsSet",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::ExclusionsSet",
+        "kind": "nested"
+      },
+      {
+        "name": "DrawRequested",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::DrawRequested",
+        "kind": "nested"
+      },
+      {
+        "name": "DrawCancelled",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::DrawCancelled",
+        "kind": "nested"
+      },
+      {
+        "name": "DrawPublished",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::DrawPublished",
+        "kind": "nested"
+      },
+      {
+        "name": "KeyRotated",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::KeyRotated",
+        "kind": "nested"
+      },
+      {
+        "name": "CiphertextUpdated",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::CiphertextUpdated",
+        "kind": "nested"
+      },
+      {
+        "name": "RevealRequested",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::RevealRequested",
+        "kind": "nested"
+      },
+      {
+        "name": "Revealed",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::Revealed",
+        "kind": "nested"
+      },
+      {
+        "name": "OperatorChanged",
+        "type": "quien_me_toco::quien_me_toco::QuienMeToco::OperatorChanged",
+        "kind": "nested"
+      }
+    ]
+  }
+]
