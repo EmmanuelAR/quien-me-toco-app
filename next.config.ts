@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cavos.dev https://*.cavos.dev",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.starknet.io https://*.zan.top https://cavos.dev https://*.cavos.dev wss://*.cavos.dev https://free-rpc.nethermind.io",
+  "frame-src 'self' https://cavos.dev https://*.cavos.dev",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   // la app lee la chain desde el navegador y casi todo es dinámico:
   // el modelo clásico (sin cache components) es más simple para este caso.
@@ -24,8 +38,11 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Content-Security-Policy", value: cspDirectives },
         ],
       },
       {
