@@ -102,7 +102,11 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     const eventAt = fromDatetimeLocalValue(form.when);
     if (!Number.isFinite(eventAt) || eventAt * 1000 < Date.now()) next.when = copy.create.errors.date;
     const max = Number(form.budgetMax);
-    if (!Number.isInteger(max) || max < 1) next.budgetMax = copy.create.errors.budget;
+    if (!form.budgetMax.trim() || !Number.isFinite(max)) {
+      next.budgetMax = copy.create.errors.budget;
+    } else if (!Number.isInteger(max) || max < 1) {
+      next.budgetMax = copy.create.errors.budgetPositive;
+    }
     const expected = Number(form.expected);
     if (!Number.isInteger(expected) || expected < 3) next.expected = copy.create.errors.expected;
     setErrors(next);

@@ -10,6 +10,7 @@ import { PayWithFollow } from "@/components/share/PayWithFollow";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Page } from "@/components/ui/AppHeader";
 import { Pill } from "@/components/ui/Pill";
+import { GroupListSkeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { GroupProgress } from "./GroupSummary";
@@ -42,7 +43,7 @@ export function HomeScreen() {
       <section aria-label={copy.home.yourGroups}>
         <h2 className="text-lg font-semibold">{copy.home.yourGroups}</h2>
         {loading && !groups ? (
-          <Spinner className="mt-6 text-ink-soft" />
+          <GroupListSkeleton />
         ) : active.length === 0 ? (
           <p className="mt-2 text-pretty text-ink-soft">{copy.home.noGroups}</p>
         ) : (

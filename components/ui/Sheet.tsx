@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy/es-CR";
+import { CloseIcon } from "./icons";
 
 export interface SheetProps {
   open: boolean;
@@ -55,8 +56,18 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
           className,
         )}
       >
-        <div className="mx-auto mb-5 h-1.5 w-9 rounded-pill bg-line sm:hidden" aria-hidden="true" />
-        {title && <h2 className="mb-5 text-lg font-semibold">{title}</h2>}
+        <div className="mx-auto mb-3 h-1.5 w-9 rounded-pill bg-line sm:hidden" aria-hidden="true" />
+        <div className="mb-5 flex items-start justify-between gap-4">
+          {title && <h2 className="text-lg font-semibold">{title}</h2>}
+          <button
+            type="button"
+            aria-label={copy.common.close}
+            className="-mr-2 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-pill text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink"
+            onClick={onClose}
+          >
+            <CloseIcon className="size-5" />
+          </button>
+        </div>
         {children}
       </div>
     </div>

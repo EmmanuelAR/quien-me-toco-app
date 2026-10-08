@@ -75,7 +75,7 @@ export function PayWithFollow({ groupId, compact = false, className }: PayWithFo
 
   return (
     <section className={cn("rounded-md bg-surface p-6", className)} aria-label={copy.pay.title}>
-      <h3 className={cn("font-semibold", compact ? "text-base" : "text-lg")}>{copy.pay.title}</h3>
+      <h2 className={cn("font-semibold", compact ? "text-base" : "text-lg")}>{copy.pay.title}</h2>
       <p className="mt-1 text-pretty text-ink-soft">{copy.pay.body}</p>
       <div className="mt-5 flex flex-col gap-2">
         {/* en compact, la pantalla ya tiene su botón principal */}

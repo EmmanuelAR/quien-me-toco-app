@@ -152,7 +152,7 @@ export function InstallPrompt({ mode = "banner", className }: InstallPromptProps
             {copy.pwa.later}
           </Button>
           <Button size="sm" onClick={() => void install()}>
-            {deferred ? copy.pwa.installAndroid : copy.common.yes}
+            {copy.common.yes}
           </Button>
         </div>
       </div>

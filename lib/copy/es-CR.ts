@@ -72,6 +72,7 @@ export const copy = {
       name: "Ponele un nombre.",
       date: "La fecha tiene que ser en el futuro.",
       budget: "Poné un presupuesto.",
+      budgetPositive: "El presupuesto tiene que ser mayor que 0.",
       expected: "Mínimo 3 personas. Si no, no hay secreto.",
     },
   },
