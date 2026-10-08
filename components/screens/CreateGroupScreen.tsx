@@ -7,7 +7,7 @@ import { LoginSheet } from "@/components/cavos/LoginSheet";
 import { useWrite, categorizeError, type WriteErrorKind } from "@/components/cavos/useWrite";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
 import { Button } from "@/components/ui/Button";
-import { Field, TextArea } from "@/components/ui/Field";
+import { Field, TextArea, CurrencyField, type Currency } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { calls, newInviteCode } from "@/lib/contract/calls";
 import { readGroupSafe, readGroupsOfAdmin } from "@/lib/contract/reads";
@@ -40,6 +40,7 @@ interface FormState {
   when: string;
   place: string;
   budgetMax: string;
+  currency: Currency;
   expected: string;
   rules: string;
 }
@@ -70,6 +71,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     when: defaultWhen(),
     place: "",
     budgetMax: "10000",
+    currency: "CRC",
     expected: "6",
     rules: "",
   });
@@ -221,14 +223,12 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
           required
         />
         <Field label={copy.create.place} placeholder={copy.create.placePlaceholder} value={form.place} onChange={set("place")} maxLength={80} />
-        <Field
+        <CurrencyField
           label={copy.create.budgetMax}
-          type="number"
-          inputMode="numeric"
-          min={1}
-          step={1}
           value={form.budgetMax}
-          onChange={set("budgetMax")}
+          currency={form.currency}
+          onChange={(v) => setForm((f) => ({ ...f, budgetMax: v }))}
+          onCurrencyChange={(c) => setForm((f) => ({ ...f, currency: c }))}
           error={errors.budgetMax}
           hint={!errors.budgetMax ? copy.create.budgetHint : undefined}
         />

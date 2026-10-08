@@ -6,7 +6,6 @@ import { useCavos } from "@cavos/kit/react";
 import { LoginSheet } from "@/components/cavos/LoginSheet";
 import { useMyGroups } from "@/components/data/useMyGroups";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
-import { PayWithFollow } from "@/components/share/PayWithFollow";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Page } from "@/components/ui/AppHeader";
 import { Pill } from "@/components/ui/Pill";
@@ -106,6 +105,8 @@ export function HomeScreen() {
     </div>
   );
 
+  const showInstall = isAuthenticated && active.length > 0;
+
   return (
     <Page>
       <div className="flex flex-col gap-12 pb-6 pt-[max(3.5rem,calc(var(--safe-top)+2.5rem))]">
@@ -113,12 +114,22 @@ export function HomeScreen() {
           <h1 className="whitespace-pre-line text-3xl font-semibold">{copy.app.name.replace(" ", "\n")}</h1>
           <p className="mt-4 text-lg text-pretty text-ink-soft">{copy.home.sub}</p>
         </header>
-        <InstallPrompt />
         {session}
-        <div className="space-y-6">
-          <PayWithFollow compact />
-          <p className="text-center text-xs text-ink-soft">{copy.app.by}</p>
-        </div>
+        {showInstall && <InstallPrompt />}
+        <footer className="space-y-3 text-center">
+          <p className="text-xs text-ink-soft">
+            {copy.pay.discrete}{" "}
+            <a
+              href="https://instagram.com/ear.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link"
+            >
+              @ear.dev
+            </a>
+          </p>
+          <p className="text-xs text-ink-soft">{copy.app.by}</p>
+        </footer>
       </div>
       <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} />
     </Page>

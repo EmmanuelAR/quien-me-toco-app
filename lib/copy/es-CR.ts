@@ -58,7 +58,7 @@ export const copy = {
     place: "Lugar",
     placePlaceholder: "Casa de la abuela",
     budgetMax: "Presupuesto máximo",
-    budgetHint: "En colones. Se vale redondear.",
+    budgetHint: "Se vale redondear.",
     expected: "¿Cuántos son?",
     expectedHint: "Contá a todos, también a los que no van a entrar a la app.",
     rules: "Reglas (opcional)",
@@ -252,6 +252,7 @@ export const copy = {
   pay: {
     title: "Esto no cuesta nada.",
     body: "Si te sirvió, pagame con un follow y una historia.",
+    discrete: "¿Te sirvió? Pagame con un follow:",
     follow: "Seguir a @ear.dev",
     story: "Subir una historia",
     storyHint: "Subila a tu historia y etiquetá a @ear.dev.",

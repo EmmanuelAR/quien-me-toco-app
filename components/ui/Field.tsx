@@ -84,3 +84,78 @@ export function TextArea({
     </label>
   );
 }
+
+export type Currency = "CRC" | "USD";
+
+const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  CRC: "₡",
+  USD: "$",
+};
+
+interface CurrencyFieldProps extends BaseProps {
+  value: string;
+  currency: Currency;
+  onChange: (value: string) => void;
+  onCurrencyChange: (currency: Currency) => void;
+  id?: string;
+  min?: number;
+  step?: number;
+  disabled?: boolean;
+}
+
+export function CurrencyField({
+  label,
+  hint,
+  error,
+  className,
+  id: idProp,
+  value,
+  currency,
+  onChange,
+  onCurrencyChange,
+  min = 1,
+  step = 1,
+  disabled,
+}: CurrencyFieldProps) {
+  const auto = useId();
+  const id = idProp ?? auto;
+  return (
+    <div className={cn("block", className)}>
+      <label htmlFor={id} className="mb-2 block text-sm font-medium text-ink">
+        {label}
+      </label>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft">
+            {CURRENCY_SYMBOLS[currency]}
+          </span>
+          <input
+            id={id}
+            type="number"
+            inputMode="numeric"
+            min={min}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            className={cn(fieldControl, "h-14 pl-8", error && invalid)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={hint || error ? `${id}-hint` : undefined}
+          />
+        </div>
+        <select
+          value={currency}
+          onChange={(e) => onCurrencyChange(e.target.value as Currency)}
+          disabled={disabled}
+          className={cn(fieldControl, "h-14 w-24 appearance-none bg-right bg-no-repeat pr-8")}
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M3 4l3 4 3-4H3z'/%3E%3C/svg%3E")`, backgroundPosition: "right 0.75rem center" }}
+          aria-label="Moneda"
+        >
+          <option value="CRC">CRC</option>
+          <option value="USD">USD</option>
+        </select>
+      </div>
+      <Message id={`${id}-hint`} hint={hint} error={error} />
+    </div>
+  );
+}
