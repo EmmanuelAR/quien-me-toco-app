@@ -6,7 +6,7 @@
  */
 export const AUTH_MAX_AGE_MS = 5 * 60 * 1000;
 
-export type AdminAction = "ghost-links" | "emails" | "email-status";
+export type AdminAction = "ghost-links" | "emails" | "email-status" | "invite-code";
 
 export interface AdminAuthPayload {
   address: string;

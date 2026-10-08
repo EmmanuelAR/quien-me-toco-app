@@ -97,6 +97,7 @@ export const keys = {
   lock: (name: string) => `lock:${name}`,
   drawTx: (groupId: bigint) => `g:${groupId}:tx:draw`,
   revealTx: (groupId: bigint) => `g:${groupId}:tx:reveal`,
+  inviteCode: (groupId: bigint) => `g:${groupId}:invite`,
 };
 
 /** segundos hasta 7 días después del intercambio (mínimo 1 día) */

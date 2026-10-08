@@ -15,6 +15,7 @@ import type { Group } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
 import { storeInviteCode } from "@/lib/invite-storage";
+import { useAdminAuth } from "@/components/cavos/useAdminAuth";
 
 function getErrorMessage(kind: WriteErrorKind | null, rawMessage: string): string {
   switch (kind) {
@@ -61,6 +62,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
   const toast = useToast();
   const { isAuthenticated, isLoading, address } = useCavos();
   const { write, busy, status, errorKind, canWrite, needsDeviceApproval, walletDeployed } = useWrite();
+  const { authHeader } = useAdminAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [previous, setPrevious] = useState<Group | null>(null);
   const [form, setForm] = useState<FormState>({
@@ -157,7 +159,8 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       const newId = after[after.length - 1];
       if (!newId || after.length <= before.length) throw new Error("no encontramos el grupo nuevo");
 
-      storeInviteCode(newId, inviteCode);
+      const header = await authHeader("invite-code", newId);
+      void storeInviteCode(newId, inviteCode, header);
 
       if (isRepeat && previous) {
         // aplicar los ajustes de nombre/lugar/presupuesto/reglas del formulario
