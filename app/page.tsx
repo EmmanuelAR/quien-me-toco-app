@@ -1,5 +1,5 @@
-import { HomeScreen } from "@/components/screens/HomeScreen";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export default function HomePage() {
-  return <HomeScreen />;
+  return <LandingPage />;
 }
