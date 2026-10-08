@@ -92,23 +92,28 @@ const faqs = [
 
 export function LandingPage() {
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-12 lg:py-20">
-      {/* Hero */}
-      <section className="text-center lg:text-left">
-        <h1 className="text-4xl font-bold lg:text-5xl">
-          Amigo secreto online gratis
-        </h1>
-        <p className="mt-6 text-xl text-pretty text-ink-soft lg:text-2xl">
-          Organizá el intercambio de regalos, repartí los nombres sin que nadie vea 
-          y revelá todo el día del evento. Hecho en Costa Rica.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-          <Link href="/crear" className={buttonClass({ size: "lg" })}>
-            Crear mi amigo secreto
-          </Link>
-          <a href="#como-funciona" className={buttonClass({ size: "lg", variant: "secondary" })}>
-            ¿Cómo funciona?
-          </a>
+    <div className="mx-auto w-full max-w-5xl px-6 py-12 lg:py-20">
+      {/* Hero - Two column on desktop */}
+      <section className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
+        <div className="text-center lg:text-left">
+          <h1 className="text-4xl font-bold lg:text-5xl">
+            Amigo secreto online gratis
+          </h1>
+          <p className="mt-6 text-xl text-pretty text-ink-soft lg:text-2xl">
+            Organizá el intercambio de regalos, repartí los nombres sin que nadie vea 
+            y revelá todo el día del evento. Hecho en Costa Rica.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+            <Link href="/crear" className={buttonClass({ size: "lg" })}>
+              Crear mi amigo secreto
+            </Link>
+            <a href="#como-funciona" className={buttonClass({ size: "lg", variant: "secondary" })}>
+              ¿Cómo funciona?
+            </a>
+          </div>
+        </div>
+        <div className="hidden lg:flex lg:items-center lg:justify-center">
+          <div className="text-[120px] leading-none" role="img" aria-label="Regalo">🎁</div>
         </div>
       </section>
 
