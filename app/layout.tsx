@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { brand, colors } from "@/lib/brand/tokens";
-import { Providers } from "@/components/cavos/Providers";
 import { SwRegister } from "@/components/pwa/SwRegister";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://quien-me-toco-app.vercel.app";
@@ -80,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+        {children}
         <SwRegister />
       </body>
     </html>
