@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCavos } from "@cavos/kit/react";
 import { LoginSheet } from "@/components/cavos/LoginSheet";
-import { useWrite } from "@/components/cavos/useWrite";
+import { useWrite, categorizeError, type WriteErrorKind } from "@/components/cavos/useWrite";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
 import { Button } from "@/components/ui/Button";
 import { Field, TextArea } from "@/components/ui/Field";
@@ -14,6 +14,25 @@ import { readGroupSafe, readGroupsOfAdmin } from "@/lib/contract/reads";
 import type { Group } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
+import { storeInviteCode } from "@/lib/invite-storage";
+
+function getErrorMessage(kind: WriteErrorKind | null, rawMessage: string): string {
+  switch (kind) {
+    case "rejected":
+      return copy.common.errorRejected;
+    case "device_approval":
+      return copy.common.errorDeviceApproval;
+    case "paymaster":
+      return copy.common.errorPaymaster;
+    case "network":
+      return copy.common.errorNetwork;
+    case "wallet_deploy":
+      return copy.common.errorWalletDeploy;
+    default:
+      console.error("[CreateGroupScreen] unhandled error:", rawMessage);
+      return copy.common.error;
+  }
+}
 
 interface FormState {
   name: string;
@@ -41,7 +60,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
   const router = useRouter();
   const toast = useToast();
   const { isAuthenticated, isLoading, address } = useCavos();
-  const { write, busy, status } = useWrite();
+  const { write, busy, status, errorKind, canWrite, needsDeviceApproval, walletDeployed } = useWrite();
   const [loginOpen, setLoginOpen] = useState(false);
   const [previous, setPrevious] = useState<Group | null>(null);
   const [form, setForm] = useState<FormState>({
@@ -94,6 +113,17 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       setLoginOpen(true);
       return;
     }
+
+    if (needsDeviceApproval) {
+      router.push("/approve-device");
+      return;
+    }
+
+    if (!canWrite) {
+      toast.show(copy.common.errorDeviceApproval, "error");
+      return;
+    }
+
     if (!validate()) return;
     const inviteCode = newInviteCode();
     const eventAt = fromDatetimeLocalValue(form.when);
@@ -112,6 +142,11 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
               expectedCount: Number(form.expected),
               inviteCode,
             });
+
+      if (!walletDeployed) {
+        toast.show(copy.common.errorWalletDeploy, "neutral");
+      }
+
       await write(call);
       // el id nuevo es el último de la lista de la admin
       let after = await readGroupsOfAdmin(address);
@@ -121,6 +156,9 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       }
       const newId = after[after.length - 1];
       if (!newId || after.length <= before.length) throw new Error("no encontramos el grupo nuevo");
+
+      storeInviteCode(newId, inviteCode);
+
       if (isRepeat && previous) {
         // aplicar los ajustes de nombre/lugar/presupuesto/reglas del formulario
         const changed =
@@ -145,7 +183,9 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       toast.show(copy.create.created, "ok");
       router.replace(`/g/${newId.toString()}/admin?nuevo=1`);
     } catch (err) {
-      toast.show(err instanceof Error && /rejected|cancel/i.test(err.message) ? copy.common.error : copy.common.error, "error");
+      const errKind = errorKind ?? categorizeError(err);
+      const message = getErrorMessage(errKind, err instanceof Error ? err.message : String(err));
+      toast.show(message, "error");
     }
   };
 

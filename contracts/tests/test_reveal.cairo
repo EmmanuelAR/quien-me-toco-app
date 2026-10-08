@@ -233,7 +233,7 @@ fn clone_group_copies_ghosts_and_enables_avoid_previous() {
     assert(g.avoid_previous, 'avoid previous on');
     assert(g.name == "navidad" && g.expected_count == 4, 'copied metadata');
     assert(g.status == status::OPEN, 'open');
-    assert(g.invite_code == 'nuevo', 'new invite');
+    assert(g.invite_code_hash != 0 && g.invite_code_hash != 'nuevo', 'new invite hashed');
     assert(c.get_participant_count(new_id) == 1, 'only the ghost');
     let p = c.get_participant(new_id, 0);
     assert(p.is_ghost && p.name == "abuela", 'abuela copied');

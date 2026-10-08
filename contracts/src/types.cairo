@@ -24,8 +24,8 @@ pub struct Group {
     pub rules: ByteArray,
     /// cuántos son (incluye a los sin cuenta)
     pub expected_count: u32,
-    /// secreto débil del link de invitación
-    pub invite_code: felt252,
+    /// hash poseidon del código de invitación (ya no se guarda en claro para evitar enumeración)
+    pub invite_code_hash: felt252,
     /// 0 si el grupo es nuevo
     pub previous_group_id: u64,
     /// que no te toque la misma persona del año pasado

@@ -14,7 +14,8 @@ fn create_group_stores_everything() {
     assert(g.budget_min == 5000 && g.budget_max == 10000, 'budget');
     assert(g.currency == 'CRC', 'currency');
     assert(g.expected_count == 4, 'expected');
-    assert(g.invite_code == INVITE, 'invite');
+    assert(g.invite_code_hash != 0, 'invite hash stored');
+    assert(g.invite_code_hash != INVITE, 'invite is hashed not plain');
     assert(g.status == status::OPEN, 'open');
     assert(!g.avoid_previous, 'no previous');
     assert(c.get_participant_count(id) == 0, 'empty');
@@ -356,4 +357,35 @@ fn unarchive_lets_the_group_live() {
     c.set_archived(id, true);
     c.set_archived(id, false);
     assert(!c.is_archived(id), 'live');
+}
+
+#[test]
+fn invite_code_hash_prevents_enumeration() {
+    let c = deploy();
+    let id1 = create_group(c, 4);
+    as_caller(c, admin());
+    let id2 = c.create_group("otro grupo", EVENT_AT, "", 5000, 10000, 'CRC', "", 3, 'otro_secreto', 0);
+    stop(c);
+    let g1 = c.get_group(id1);
+    let g2 = c.get_group(id2);
+    assert(g1.invite_code_hash != INVITE, 'g1 not plain');
+    assert(g2.invite_code_hash != 'otro_secreto', 'g2 not plain');
+    assert(g1.invite_code_hash != g2.invite_code_hash, 'different hashes');
+}
+
+#[test]
+#[should_panic(expected: 'bad invite code')]
+fn join_with_wrong_code_fails() {
+    let c = deploy();
+    let id = create_group(c, 4);
+    as_caller(c, ana());
+    c.join(id, 'wrong_code', "ana", 1, 777, wishlist("algo"));
+}
+
+#[test]
+fn join_with_correct_code_works() {
+    let c = deploy();
+    let id = create_group(c, 4);
+    let idx = join(c, id, ana(), "ana", 11);
+    assert(idx == 0, 'joined with correct code');
 }

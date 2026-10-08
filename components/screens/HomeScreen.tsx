@@ -15,6 +15,7 @@ import { ChevronRightIcon } from "@/components/ui/icons";
 import { GroupProgress } from "./GroupSummary";
 import { copy } from "@/lib/copy/es-CR";
 import { formatDateShort } from "@/lib/format";
+import { fixMojibake } from "@/lib/text";
 
 const row = "flex items-center gap-3 py-4 transition-opacity active:opacity-60";
 
@@ -85,7 +86,7 @@ export function HomeScreen() {
       )}
 
       <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-        <p className="min-w-0 truncate text-sm text-ink-soft">{user?.name || user?.email || ""}</p>
+        <p className="min-w-0 truncate text-sm text-ink-soft">{fixMojibake(user?.name) || user?.email || ""}</p>
         <Button variant="ghost" size="sm" className="-mr-4" onClick={salir}>
           {copy.auth.logout}
         </Button>

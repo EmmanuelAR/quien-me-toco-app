@@ -28,6 +28,7 @@ import { readParticipants, readReveal } from "@/lib/contract/reads";
 import { GroupStatus, type Exclusion, type Wishlist } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
 import { formatDateTimeLong } from "@/lib/format";
+import { getStoredInviteCode } from "@/lib/invite-storage";
 
 const REVEAL_GRACE = 86400;
 
@@ -183,6 +184,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   const everyoneIn = group.participantCount === group.expectedCount && group.participantCount >= 3;
   const canRevealNow = now > 0 && now + REVEAL_GRACE >= group.eventAt;
   const accountNames = participants.filter((p) => !p.isGhost);
+  const storedInviteCode = getStoredInviteCode(groupId);
 
   return (
     <Page>
@@ -198,10 +200,10 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
           </p>
         )}
 
-        {s === GroupStatus.Open && (
+        {s === GroupStatus.Open && storedInviteCode && (
           <section className="space-y-3">
-            <ShareInvite group={group} />
-            <p className="truncate text-center text-xs text-ink-soft">{inviteUrl(group)}</p>
+            <ShareInvite group={group} inviteCode={storedInviteCode} />
+            <p className="truncate text-center text-xs text-ink-soft">{inviteUrl(groupId, storedInviteCode)}</p>
           </section>
         )}
 
@@ -248,8 +250,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
                   {copy.admin.reopenRegistrations}
                 </Button>
               )}
-              {!amParticipant && s === GroupStatus.Open && (
-                <Link href={inviteUrl(group).replace(/^https?:\/\/[^/]+/, "")} className={buttonClass({ variant: "secondary", size: "sm" })}>
+              {!amParticipant && s === GroupStatus.Open && storedInviteCode && (
+                <Link href={inviteUrl(groupId, storedInviteCode).replace(/^https?:\/\/[^/]+/, "")} className={buttonClass({ variant: "secondary", size: "sm" })}>
                   {copy.admin.iAlsoPlay}
                 </Link>
               )}
