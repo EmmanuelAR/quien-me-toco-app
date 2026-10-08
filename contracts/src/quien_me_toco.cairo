@@ -453,7 +453,8 @@ pub mod QuienMeToco {
             self.ensure_live(group_id);
             let g = self.group_or_panic(group_id);
             assert(g.status == status::OPEN, errors::NOT_OPEN);
-            assert(g.invite_code == invite_code, errors::BAD_INVITE);
+            let provided_hash = invite_code_hash(invite_code);
+            assert(g.invite_code_hash == provided_hash, errors::BAD_INVITE);
             assert(name.len() > 0, errors::NAME_REQUIRED);
             assert(enc_pubkey != 0, errors::PUBKEY_REQUIRED);
             let n = self.participant_count.entry(group_id).read();
@@ -731,6 +732,12 @@ pub mod QuienMeToco {
         poseidon_hash_span(array![group_id.into(), index.into(), receiver.into(), salt].span())
     }
 
+    /// hash del código de invitación — se guarda este hash en lugar del código en claro
+    /// para evitar que alguien enumere grupos y descubra los códigos
+    pub fn invite_code_hash(invite_code: felt252) -> felt252 {
+        poseidon_hash_span(array!['qmt:invite:', invite_code].span())
+    }
+
     #[generate_trait]
     impl Internal of InternalTrait {
         fn only_operator(self: @ContractState) {
@@ -798,7 +805,7 @@ pub mod QuienMeToco {
                 currency,
                 rules,
                 expected_count,
-                invite_code,
+                invite_code_hash: invite_code_hash(invite_code),
                 previous_group_id,
                 avoid_previous: previous_group_id != 0,
                 status: status::OPEN,

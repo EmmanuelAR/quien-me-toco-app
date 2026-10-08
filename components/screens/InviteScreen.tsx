@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCavos } from "@cavos/kit/react";
 import { LoginSheet } from "@/components/cavos/LoginSheet";
-import { useWrite } from "@/components/cavos/useWrite";
+import { useWrite, categorizeError, type WriteErrorKind } from "@/components/cavos/useWrite";
 import { useGroup } from "@/components/data/useGroup";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
@@ -21,13 +21,34 @@ import { GroupStatus, emptyWishlist, type Wishlist } from "@/lib/contract/types"
 import { copy } from "@/lib/copy/es-CR";
 import { emailCommit, isValidEmail, newEmailNonce, normalizeEmail } from "@/lib/crypto/email";
 import { ensureKeyPair } from "@/lib/crypto/keys";
+import { fixMojibake } from "@/lib/text";
+
+function getErrorMessage(kind: WriteErrorKind | null, rawMessage: string): string {
+  switch (kind) {
+    case "rejected":
+      return copy.common.errorRejected;
+    case "device_approval":
+      return copy.common.errorDeviceApproval;
+    case "paymaster":
+      return copy.common.errorPaymaster;
+    case "network":
+      return copy.common.errorNetwork;
+    case "wallet_deploy":
+      return copy.common.errorWalletDeploy;
+    case "bad_invite":
+      return copy.invite.badInvite;
+    default:
+      console.error("[InviteScreen] unhandled error:", rawMessage);
+      return copy.common.error;
+  }
+}
 
 export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteCode: bigint | null }) {
   const router = useRouter();
   const toast = useToast();
   const { isAuthenticated, isLoading, address, user } = useCavos();
   const { data, loading, notFound, error } = useGroup(groupId, { pollMs: 15_000 });
-  const { write, busy, status } = useWrite();
+  const { write, busy, status, errorKind, canWrite, needsDeviceApproval, walletDeployed } = useWrite();
   const [loginOpen, setLoginOpen] = useState(false);
   const [myIndex, setMyIndex] = useState<number | null | undefined>(undefined);
   const [name, setName] = useState("");
@@ -37,14 +58,14 @@ export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteC
   const wishlistTitleId = useId();
 
   const group = data?.group ?? null;
-  const codeOk = useMemo(() => Boolean(group && inviteCode !== null && group.inviteCode === inviteCode), [group, inviteCode]);
+  const hasInviteCode = inviteCode !== null;
 
   // prellenar nombre y correo con lo que trae el login (ajuste de estado durante el render)
   const [seenUser, setSeenUser] = useState(user);
   if (user !== seenUser) {
     setSeenUser(user);
     if (user?.email && !email) setEmail(user.email);
-    if (user?.name && !name) setName(user.name);
+    if (user?.name && !name) setName(fixMojibake(user.name));
   }
 
   useEffect(() => {
@@ -70,6 +91,17 @@ export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteC
       setLoginOpen(true);
       return;
     }
+
+    if (needsDeviceApproval) {
+      router.push("/approve-device");
+      return;
+    }
+
+    if (!canWrite) {
+      toast.show(copy.common.errorDeviceApproval, "error");
+      return;
+    }
+
     const next: typeof errors = {};
     if (!name.trim()) next.name = copy.create.errors.name;
     if (!isValidEmail(email)) next.email = copy.invite.emailInvalid;
@@ -77,6 +109,10 @@ export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteC
     if (Object.keys(next).length) return;
 
     try {
+      if (!walletDeployed) {
+        toast.show(copy.common.errorWalletDeploy, "neutral");
+      }
+
       const kp = await ensureKeyPair(address);
       const nonce = newEmailNonce();
       const commit = emailCommit(email, nonce);
@@ -88,8 +124,10 @@ export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteC
       }).catch(() => undefined);
       toast.show(copy.invite.done, "ok");
       router.replace(`/g/${groupId.toString()}`);
-    } catch {
-      toast.show(copy.common.error, "error");
+    } catch (err) {
+      const errKind = errorKind ?? categorizeError(err);
+      const message = getErrorMessage(errKind, err instanceof Error ? err.message : String(err));
+      toast.show(message, "error");
     }
   };
 
@@ -100,7 +138,7 @@ export function InviteScreen({ groupId, inviteCode }: { groupId: bigint; inviteC
       </Page>
     );
   }
-  if (notFound || !group || !codeOk) {
+  if (notFound || !group || !hasInviteCode) {
     return (
       <Page>
         <AppHeader backHref="/" />

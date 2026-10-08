@@ -28,6 +28,8 @@ import { readParticipants, readReveal } from "@/lib/contract/reads";
 import { GroupStatus, type Exclusion, type Wishlist } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
 import { formatDateTimeLong } from "@/lib/format";
+import { getStoredInviteCode, fetchInviteCodeFromServer } from "@/lib/invite-storage";
+import { useAdminAuth } from "@/components/cavos/useAdminAuth";
 
 const REVEAL_GRACE = 86400;
 
@@ -37,6 +39,7 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   const { isAuthenticated, isLoading, address } = useCavos();
   const { data, loading, notFound, error, refresh } = useGroup(groupId, { pollMs: 8_000, withExclusions: true });
   const { write, busy } = useWrite();
+  const { authHeader } = useAdminAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [expectedOpen, setExpectedOpen] = useState(false);
   const [expectedDraft, setExpectedDraft] = useState("");
@@ -44,6 +47,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   const [previous, setPrevious] = useState<Array<number | null> | undefined>(undefined);
   const [phase, setPhase] = useState<"idle" | "drawing" | "revealing">("idle");
   const [confirmDraw, setConfirmDraw] = useState(false);
+  const [inviteCode, setInviteCode] = useState<bigint | null>(null);
+  const [inviteCodeLoading, setInviteCodeLoading] = useState(false);
 
   const group = data?.group ?? null;
   const participants = useMemo(() => data?.participants ?? [], [data]);
@@ -73,6 +78,23 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
   }, [previousApplies, previousGroupId, participants]);
   const previousForCheck = previousApplies ? previous : undefined;
   const now = useNow();
+
+  // Fetch invite code: try localStorage first, then server
+  useEffect(() => {
+    if (!isAdmin || !group) return;
+    const local = getStoredInviteCode(groupId);
+    if (local) {
+      setInviteCode(local);
+      return;
+    }
+    // Try fetching from server
+    setInviteCodeLoading(true);
+    authHeader("invite-code", groupId)
+      .then((header) => fetchInviteCodeFromServer(groupId, header))
+      .then((code) => setInviteCode(code))
+      .catch(() => setInviteCode(null))
+      .finally(() => setInviteCodeLoading(false));
+  }, [isAdmin, group, groupId, authHeader]);
 
   const run = useCallback(
     async (fn: () => Promise<unknown>, okMessage?: string) => {
@@ -198,10 +220,10 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
           </p>
         )}
 
-        {s === GroupStatus.Open && (
+        {s === GroupStatus.Open && inviteCode && (
           <section className="space-y-3">
-            <ShareInvite group={group} />
-            <p className="truncate text-center text-xs text-ink-soft">{inviteUrl(group)}</p>
+            <ShareInvite group={group} inviteCode={inviteCode} />
+            <p className="truncate text-center text-xs text-ink-soft">{inviteUrl(groupId, inviteCode)}</p>
           </section>
         )}
 
@@ -248,8 +270,8 @@ export function AdminScreen({ groupId, justCreated }: { groupId: bigint; justCre
                   {copy.admin.reopenRegistrations}
                 </Button>
               )}
-              {!amParticipant && s === GroupStatus.Open && (
-                <Link href={inviteUrl(group).replace(/^https?:\/\/[^/]+/, "")} className={buttonClass({ variant: "secondary", size: "sm" })}>
+              {!amParticipant && s === GroupStatus.Open && inviteCode && (
+                <Link href={inviteUrl(groupId, inviteCode).replace(/^https?:\/\/[^/]+/, "")} className={buttonClass({ variant: "secondary", size: "sm" })}>
                   {copy.admin.iAlsoPlay}
                 </Link>
               )}

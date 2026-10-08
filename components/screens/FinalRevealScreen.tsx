@@ -8,6 +8,7 @@ import { ChainReveal } from "@/components/draw/ChainReveal";
 import { PayWithFollow } from "@/components/share/PayWithFollow";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
 import { buttonClass } from "@/components/ui/Button";
+import { Confetti } from "@/components/ui/Confetti";
 import { Spinner } from "@/components/ui/Spinner";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import { readReveal } from "@/lib/contract/reads";
@@ -47,6 +48,7 @@ export function FinalRevealScreen({ groupId }: { groupId: bigint }) {
 
   return (
     <Page>
+      <Confetti active={finished} />
       <AppHeader backHref={`/g/${groupId}`} eyebrow={group.name} title={copy.finalReveal.title} subtitle={copy.finalReveal.sub} />
 
       {group.status !== GroupStatus.Revealed ? (

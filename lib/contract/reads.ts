@@ -41,7 +41,6 @@ function decodeGroup(id: bigint, raw: Record<string, unknown>, participantCount:
     currency: decodeShortString(raw.currency),
     rules: toText(raw.rules),
     expectedCount: toNumber(raw.expected_count),
-    inviteCode: BigInt(raw.invite_code as bigint),
     previousGroupId: BigInt(raw.previous_group_id as bigint),
     avoidPrevious: Boolean(raw.avoid_previous),
     status: toNumber(raw.status) as GroupStatusValue,

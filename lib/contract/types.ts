@@ -22,7 +22,6 @@ export interface Group {
   currency: string;
   rules: string;
   expectedCount: number;
-  inviteCode: bigint;
   previousGroupId: bigint;
   avoidPrevious: boolean;
   status: GroupStatusValue;

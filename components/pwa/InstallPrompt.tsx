@@ -86,7 +86,12 @@ export function InstallPrompt({ mode = "banner", className }: InstallPromptProps
     };
   }, []);
 
-  if (!mounted || installed || isStandalone()) return null;
+  if (installed) return null;
+  if (!mounted && mode === "banner") {
+    return <div className={cn("h-[118px] rounded-md bg-surface", className)} aria-hidden="true" />;
+  }
+  if (!mounted) return null;
+  if (isStandalone()) return null;
   const ios = isIOS();
   const dismissedBefore = localStorage.getItem(DISMISSED_KEY) === "1";
   if (mode === "banner" && (dismissedBefore || dismissedNow)) return null;
@@ -152,7 +157,7 @@ export function InstallPrompt({ mode = "banner", className }: InstallPromptProps
             {copy.pwa.later}
           </Button>
           <Button size="sm" onClick={() => void install()}>
-            {deferred ? copy.pwa.installAndroid : copy.common.yes}
+            {copy.common.yes}
           </Button>
         </div>
       </div>

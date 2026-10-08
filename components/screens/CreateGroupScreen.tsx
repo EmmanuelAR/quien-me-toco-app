@@ -4,22 +4,43 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCavos } from "@cavos/kit/react";
 import { LoginSheet } from "@/components/cavos/LoginSheet";
-import { useWrite } from "@/components/cavos/useWrite";
+import { useWrite, categorizeError, type WriteErrorKind } from "@/components/cavos/useWrite";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
 import { Button } from "@/components/ui/Button";
-import { Field, TextArea } from "@/components/ui/Field";
+import { Field, TextArea, CurrencyField, type Currency } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { calls, newInviteCode } from "@/lib/contract/calls";
 import { readGroupSafe, readGroupsOfAdmin } from "@/lib/contract/reads";
 import type { Group } from "@/lib/contract/types";
 import { copy } from "@/lib/copy/es-CR";
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
+import { storeInviteCode } from "@/lib/invite-storage";
+import { useAdminAuth } from "@/components/cavos/useAdminAuth";
+
+function getErrorMessage(kind: WriteErrorKind | null, rawMessage: string): string {
+  switch (kind) {
+    case "rejected":
+      return copy.common.errorRejected;
+    case "device_approval":
+      return copy.common.errorDeviceApproval;
+    case "paymaster":
+      return copy.common.errorPaymaster;
+    case "network":
+      return copy.common.errorNetwork;
+    case "wallet_deploy":
+      return copy.common.errorWalletDeploy;
+    default:
+      console.error("[CreateGroupScreen] unhandled error:", rawMessage);
+      return copy.common.error;
+  }
+}
 
 interface FormState {
   name: string;
   when: string;
   place: string;
   budgetMax: string;
+  currency: Currency;
   expected: string;
   rules: string;
 }
@@ -41,7 +62,8 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
   const router = useRouter();
   const toast = useToast();
   const { isAuthenticated, isLoading, address } = useCavos();
-  const { write, busy, status } = useWrite();
+  const { write, busy, status, errorKind, canWrite, needsDeviceApproval, walletDeployed } = useWrite();
+  const { authHeader } = useAdminAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [previous, setPrevious] = useState<Group | null>(null);
   const [form, setForm] = useState<FormState>({
@@ -49,6 +71,7 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     when: defaultWhen(),
     place: "",
     budgetMax: "10000",
+    currency: "CRC",
     expected: "6",
     rules: "",
   });
@@ -81,7 +104,11 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
     const eventAt = fromDatetimeLocalValue(form.when);
     if (!Number.isFinite(eventAt) || eventAt * 1000 < Date.now()) next.when = copy.create.errors.date;
     const max = Number(form.budgetMax);
-    if (!Number.isInteger(max) || max < 1) next.budgetMax = copy.create.errors.budget;
+    if (!form.budgetMax.trim() || !Number.isFinite(max)) {
+      next.budgetMax = copy.create.errors.budget;
+    } else if (!Number.isInteger(max) || max < 1) {
+      next.budgetMax = copy.create.errors.budgetPositive;
+    }
     const expected = Number(form.expected);
     if (!Number.isInteger(expected) || expected < 3) next.expected = copy.create.errors.expected;
     setErrors(next);
@@ -94,6 +121,17 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       setLoginOpen(true);
       return;
     }
+
+    if (needsDeviceApproval) {
+      router.push("/approve-device");
+      return;
+    }
+
+    if (!canWrite) {
+      toast.show(copy.common.errorDeviceApproval, "error");
+      return;
+    }
+
     if (!validate()) return;
     const inviteCode = newInviteCode();
     const eventAt = fromDatetimeLocalValue(form.when);
@@ -112,6 +150,11 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
               expectedCount: Number(form.expected),
               inviteCode,
             });
+
+      if (!walletDeployed) {
+        toast.show(copy.common.errorWalletDeploy, "neutral");
+      }
+
       await write(call);
       // el id nuevo es el último de la lista de la admin
       let after = await readGroupsOfAdmin(address);
@@ -121,6 +164,10 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       }
       const newId = after[after.length - 1];
       if (!newId || after.length <= before.length) throw new Error("no encontramos el grupo nuevo");
+
+      const header = await authHeader("invite-code", newId);
+      void storeInviteCode(newId, inviteCode, header);
+
       if (isRepeat && previous) {
         // aplicar los ajustes de nombre/lugar/presupuesto/reglas del formulario
         const changed =
@@ -145,7 +192,9 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
       toast.show(copy.create.created, "ok");
       router.replace(`/g/${newId.toString()}/admin?nuevo=1`);
     } catch (err) {
-      toast.show(err instanceof Error && /rejected|cancel/i.test(err.message) ? copy.common.error : copy.common.error, "error");
+      const errKind = errorKind ?? categorizeError(err);
+      const message = getErrorMessage(errKind, err instanceof Error ? err.message : String(err));
+      toast.show(message, "error");
     }
   };
 
@@ -174,14 +223,12 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: bigint | nul
           required
         />
         <Field label={copy.create.place} placeholder={copy.create.placePlaceholder} value={form.place} onChange={set("place")} maxLength={80} />
-        <Field
+        <CurrencyField
           label={copy.create.budgetMax}
-          type="number"
-          inputMode="numeric"
-          min={1}
-          step={1}
           value={form.budgetMax}
-          onChange={set("budgetMax")}
+          currency={form.currency}
+          onChange={(v) => setForm((f) => ({ ...f, budgetMax: v }))}
+          onCurrencyChange={(c) => setForm((f) => ({ ...f, currency: c }))}
           error={errors.budgetMax}
           hint={!errors.budgetMax ? copy.create.budgetHint : undefined}
         />

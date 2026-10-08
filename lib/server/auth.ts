@@ -2,9 +2,10 @@ import "server-only";
 import { num } from "starknet";
 import { getProvider } from "@/lib/contract/client";
 import { readGroup } from "@/lib/contract/reads";
-import type { AdminAction, AdminAuthPayload } from "@/lib/auth/message";
+import { AUTH_MAX_AGE_MS, type AdminAction, type AdminAuthPayload } from "@/lib/auth/message";
 import { normalizeAddress, pubkeyCalldata, verifySignedMessage } from "@/lib/auth/verify";
 import type { Group } from "@/lib/contract/types";
+import { kv } from "./kv";
 
 export class AuthError extends Error {
   constructor(
@@ -27,6 +28,8 @@ async function isAuthorizedSigner(account: string, publicKey: Uint8Array): Promi
   }
 }
 
+const signatureKey = (sig: string) => `auth:sig:${sig.slice(0, 32)}`;
+
 /**
  * verifica el payload firmado con cavos y devuelve el grupo si quien firma es la admin.
  * lanza AuthError si no.
@@ -34,6 +37,15 @@ async function isAuthorizedSigner(account: string, publicKey: Uint8Array): Promi
 export async function verifyAdmin(payload: Partial<AdminAuthPayload> | null, action: AdminAction, groupId: bigint): Promise<Group> {
   const outcome = verifySignedMessage(payload, action, groupId);
   if (!outcome.ok) throw new AuthError(outcome.error);
+
+  if (payload?.signature) {
+    const key = signatureKey(payload.signature);
+    const alreadyUsed = await kv().get<boolean>(key);
+    if (alreadyUsed) throw new AuthError("Esta firma ya fue usada. Intentá de nuevo.");
+    const ttlSec = Math.ceil(AUTH_MAX_AGE_MS / 1000) + 10;
+    await kv().set(key, true, { ex: ttlSec });
+  }
+
   if (!(await isAuthorizedSigner(outcome.address, outcome.publicKey))) throw new AuthError("Esta llave no está autorizada.");
   const group = await readGroup(groupId);
   if (normalizeAddress(group.admin) !== outcome.address) throw new AuthError("Este panel es solo para quien organiza.", 403);
