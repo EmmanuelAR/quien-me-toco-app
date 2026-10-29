@@ -5,10 +5,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) return jsonError("unauthorized", 401);
-  }
+  if (!secret) return jsonError("misconfigured", 503);
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${secret}`) return jsonError("unauthorized", 401);
   try {
     await purgeExpiredGroups();
     return jsonOk({ ok: true });

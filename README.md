@@ -38,6 +38,9 @@ Trusted domain en Neon Auth: `http://localhost:3000` (+ dominio de prod). Google
 
 ## Flujo
 
-Login Google → dashboard → crear grupo → link `/i/{inviteToken}` → join → wishlists / exclusiones → sorteo (≥3) → cada quien ve solo su slip → reveal el día del evento.
+Login Google → dashboard → crear grupo → link `/i/{inviteToken}` → join → wishlists / exclusiones → sorteo (≥3) → cada quien ve solo su slip → reveal el día del evento (America/Costa_Rica).
 
-Los grupos se borran tras `purge_after` (evento + 7 días) vía `POST /api/cron/purge`.
+Los grupos se borran tras `purge_after` (evento + 7 días) vía `POST /api/cron/purge` (Bearer `CRON_SECRET`).
+Recordatorios ~36h antes: `POST /api/cron/reminders`.
+
+Schema: aplicar `db/migrations/001_app.sql`, `002_drop_ghosts.sql`, `003_improvements.sql` en Neon.

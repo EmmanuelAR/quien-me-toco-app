@@ -15,6 +15,9 @@ export interface GroupRow {
   archived: boolean;
   created_at: string;
   purge_after: string;
+  source_group_id: string | null;
+  avoid_previous: boolean;
+  reminder_sent_at: string | null;
 }
 
 export interface MemberRow {

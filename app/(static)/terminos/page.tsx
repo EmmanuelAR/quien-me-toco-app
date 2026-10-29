@@ -16,25 +16,24 @@ export default function TerminosPage() {
 
       <section className="prose prose-ink mt-8 max-w-none">
         <p>
-          Al usar <strong>¿Quién me tocó?</strong> (la "App"), aceptás estos términos de uso. 
-          Si no estás de acuerdo, no uses la App.
+          Al usar <strong>¿Quién me tocó?</strong> (la &quot;App&quot;), aceptás estos términos. Si no
+          estás de acuerdo, no uses la App.
         </p>
 
         <h2>1. Descripción del servicio</h2>
         <p>
-          <strong>¿Quién me tocó?</strong> es una aplicación web gratuita para organizar sorteos 
-          de amigo secreto (también conocido como amigo invisible o intercambio navideño). 
-          Permite crear grupos, invitar participantes, realizar el sorteo y revelar las asignaciones.
+          <strong>¿Quién me tocó?</strong> es una aplicación web gratuita para organizar sorteos de
+          amigo secreto. Permite crear grupos, invitar participantes, realizar el sorteo y revelar
+          las asignaciones.
         </p>
 
         <h2>2. Requisitos</h2>
         <ul>
           <li>Debés tener al menos 13 años para usar la App.</li>
           <li>
-            Para crear un grupo como organizador, necesitás una cuenta de Google o Apple 
-            y una wallet de Starknet (proporcionada automáticamente por Cavos).
+            Para organizar o participar necesitás entrar con una cuenta de <strong>Google</strong>.
           </li>
-          <li>Los participantes pueden unirse sin cuenta, solo con el link de invitación.</li>
+          <li>Quien organiza comparte un link de invitación; quien se une también entra con Google.</li>
         </ul>
 
         <h2>3. Uso aceptable</h2>
@@ -47,79 +46,63 @@ export default function TerminosPage() {
         <ul>
           <li>Usar la App para actividades ilegales o fraudulentas.</li>
           <li>Intentar acceder a grupos sin autorización.</li>
-          <li>Publicar contenido ofensivo, difamatorio o ilegal en los nombres o listas de deseos.</li>
-          <li>Interferir con el funcionamiento de la App o de la blockchain.</li>
-          <li>Crear bots o scripts automatizados para interactuar con la App.</li>
+          <li>Publicar contenido ofensivo o ilegal en nombres o listas de deseos.</li>
+          <li>Interferir con el funcionamiento de la App.</li>
+          <li>Abusar de la App con bots o automatización masiva.</li>
         </ul>
 
-        <h2>4. Datos en blockchain</h2>
+        <h2>4. Datos</h2>
         <p>
-          Entendés y aceptás que los datos de los grupos, participantes y asignaciones se 
-          almacenan en <strong>Starknet Sepolia</strong>, una blockchain pública de pruebas. 
-          Esto significa que:
+          Entendés que los datos del grupo se guardan en una base de datos privada (Neon) y se
+          borran automáticamente después del evento según la política de privacidad. El sorteo se
+          calcula en el servidor; cada participante ve solo su propio papelito hasta la revelación.
         </p>
-        <ul>
-          <li>Los datos son públicamente visibles y no se pueden eliminar.</li>
-          <li>
-            No debés usar información personal sensible que no quieras que sea pública.
-          </li>
-          <li>
-            La verificabilidad del sorteo depende de la integridad de la blockchain, 
-            sobre la cual no tenemos control.
-          </li>
-        </ul>
 
         <h2>5. Propiedad intelectual</h2>
         <p>
-          El código fuente, diseño, marca y contenido de la App son propiedad de Emmanuel 
-          Agüero Rojas o están licenciados para su uso. No podés copiar, modificar o distribuir 
-          la App sin autorización, excepto según lo permita la licencia del código fuente 
-          si está publicado como open source.
+          El código, diseño, marca y contenido de la App son propiedad de Emmanuel Agüero Rojas o
+          están licenciados para su uso. No podés copiar o distribuir la App sin autorización,
+          excepto según lo permita la licencia del código fuente si está publicado como open source.
         </p>
 
         <h2>6. Limitación de responsabilidad</h2>
         <p>
-          La App se proporciona "tal cual" sin garantías de ningún tipo. No somos responsables por:
-        </p>
-        <ul>
-          <li>Pérdida de datos o interrupciones del servicio.</li>
-          <li>Disputas entre participantes de un grupo.</li>
-          <li>Problemas con la blockchain de Starknet Sepolia.</li>
-          <li>Cualquier daño indirecto derivado del uso de la App.</li>
-        </ul>
-        <p>
-          Nuestra responsabilidad máxima está limitada al monto que hayas pagado por usar 
-          la App (que actualmente es cero, porque es gratis).
+          La App se proporciona &quot;tal cual&quot; sin garantías. No somos responsables por pérdida
+          de datos, interrupciones, disputas entre participantes ni daños indirectos. La
+          responsabilidad máxima está limitada a lo que hayas pagado por usar la App (hoy: cero).
         </p>
 
         <h2>7. Terminación</h2>
         <p>
-          Podemos suspender o terminar tu acceso a la App en cualquier momento si violás 
-          estos términos o por cualquier otra razón a nuestra discreción. Los datos ya 
-          escritos en la blockchain no se pueden eliminar.
+          Podemos suspender el acceso si violás estos términos. Los datos sujetos a purge se
+          eliminan según el calendario del grupo.
         </p>
 
-        <h2>8. Cambios a los términos</h2>
+        <h2>8. Cambios</h2>
         <p>
-          Podemos modificar estos términos en cualquier momento. El uso continuado de la App 
-          después de los cambios constituye aceptación de los nuevos términos.
+          Podemos modificar estos términos. El uso continuado después de los cambios constituye
+          aceptación.
         </p>
 
         <h2>9. Ley aplicable</h2>
         <p>
-          Estos términos se rigen por las leyes de Costa Rica. Cualquier disputa se resolverá 
-          en los tribunales de San José, Costa Rica.
+          Estos términos se rigen por las leyes de Costa Rica. Las disputas se resuelven en los
+          tribunales de San José, Costa Rica.
         </p>
 
         <h2>10. Contacto</h2>
         <p>
-          Para preguntas sobre estos términos, escribinos a{" "}
-          <a href="mailto:hola@ear.dev" className="link">hola@ear.dev</a>.
+          <a href="mailto:hola@ear.dev" className="link">
+            hola@ear.dev
+          </a>
+          .
         </p>
       </section>
 
       <div className="mt-12 border-t border-line pt-8">
-        <Link href="/" className="link">&larr; Volver al inicio</Link>
+        <Link href="/" className="link">
+          &larr; Volver al inicio
+        </Link>
       </div>
     </main>
   );

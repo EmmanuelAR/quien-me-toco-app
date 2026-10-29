@@ -22,7 +22,8 @@ import { api } from "@/lib/api/client";
 import { MIN_PARTICIPANTS, type AppExclusion } from "@/lib/app/types";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy/es-CR";
-import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
+import { capitalize, formatDate, fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format";
+import { APP_TZ } from "@/lib/time/reveal";
 
 type AdminTab = "invite" | "people" | "exclusions" | "more";
 
@@ -47,7 +48,9 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
   const wishlistRows = members.map((m) => ({
     id: m.id,
     name: m.name,
-    filled: Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
+    filled:
+      m.wishlistFilled ??
+      Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
   }));
 
   const tabs = useMemo(
@@ -67,8 +70,10 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
       await refresh();
       if (ok) toast.show(ok, "ok");
     } catch (e) {
-      const code = (e as { code?: string }).code;
-      toast.show(code === "infeasible" ? copy.admin.infeasible : copy.common.error, "error");
+      const err = e as { code?: string; message?: string };
+      if (err.code === "infeasible") toast.show(copy.admin.infeasible, "error");
+      else if (err.code === "too_early" && err.message) toast.show(err.message, "error");
+      else toast.show(copy.common.error, "error");
     } finally {
       setBusy(false);
     }
@@ -155,6 +160,27 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
           {preDraw && (
             <div className="space-y-3">
               <Button
+                variant="secondary"
+                fullWidth
+                disabled={busy}
+                onClick={() =>
+                  void run(
+                    () =>
+                      api(`/api/groups/${groupId}`, {
+                        method: "PATCH",
+                        body: JSON.stringify({
+                          status: group.status === "open" ? "closed" : "open",
+                        }),
+                      }),
+                    group.status === "open"
+                      ? copy.admin.closeRegistrations
+                      : copy.admin.reopenRegistrations,
+                  )
+                }
+              >
+                {group.status === "open" ? copy.admin.closeRegistrations : copy.admin.reopenRegistrations}
+              </Button>
+              <Button
                 size="lg"
                 fullWidth
                 disabled={busy || !canDraw || !feasible}
@@ -168,19 +194,58 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
           )}
 
           {group.status === "drawn" && (
-            <Button
-              size="lg"
-              fullWidth
-              disabled={busy}
-              onClick={() =>
-                void run(
-                  () => api(`/api/groups/${groupId}/reveal`, { method: "POST" }),
-                  copy.admin.revealed,
-                )
-              }
-            >
-              {copy.admin.reveal}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                size="lg"
+                fullWidth
+                disabled={busy || !group.canReveal}
+                onClick={() =>
+                  void run(
+                    () => api(`/api/groups/${groupId}/reveal`, { method: "POST" }),
+                    copy.admin.revealed,
+                  )
+                }
+              >
+                {copy.admin.reveal}
+              </Button>
+              <p className="text-sm text-ink-soft">
+                {group.canReveal
+                  ? copy.admin.revealHint
+                  : copy.admin.revealTooEarly(
+                      capitalize(formatDate(group.eventAt, { timeZone: APP_TZ })),
+                    )}
+              </p>
+              <Button
+                variant="secondary"
+                fullWidth
+                disabled={busy}
+                onClick={() =>
+                  void (async () => {
+                    setBusy(true);
+                    try {
+                      const res = await api<{
+                        emails?: { configured?: boolean; sent?: number; skipped?: number; failed?: number };
+                      }>(`/api/groups/${groupId}/notify-draw`, { method: "POST" });
+                      const em = res.emails;
+                      if (em?.configured) {
+                        toast.show(
+                          copy.admin.drawnEmails(em.sent ?? 0, em.skipped ?? 0, em.failed ?? 0),
+                          "ok",
+                        );
+                      } else {
+                        toast.show(copy.admin.drawnEmails(0, 0), "ok");
+                      }
+                    } catch {
+                      toast.show(copy.common.error, "error");
+                    } finally {
+                      setBusy(false);
+                    }
+                  })()
+                }
+              >
+                {copy.admin.emailsRetry}
+              </Button>
+            </div>
           )}
 
           {group.status === "revealed" && (
@@ -196,12 +261,32 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
             <p className="text-sm text-ink-soft">{copy.common.people(group.participantCount)}</p>
             {!canDraw && <p className="text-sm text-ink-soft">{copy.admin.needMin(MIN_PARTICIPANTS)}</p>}
             <ul className="divide-y divide-line border-y border-line">
-              {members.map((m) => (
-                <li key={m.id} className="flex min-h-12 items-center justify-between gap-2 py-2">
-                  <span className="truncate">{m.name}</span>
-                  {!m.userId && <Pill className="bg-white text-ink-soft">prueba</Pill>}
-                </li>
-              ))}
+              {members.map((m) => {
+                const isOwnerSeat = group.isOwner && m.id === group.myMemberId;
+                return (
+                  <li key={m.id} className="flex min-h-12 items-center justify-between gap-2 py-2">
+                    <span className="truncate">{m.name}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {!m.userId && <Pill className="bg-white text-ink-soft">pendiente</Pill>}
+                      {preDraw && !isOwnerSeat && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(
+                              () => api(`/api/members/${m.id}`, { method: "DELETE" }),
+                              copy.admin.remove,
+                            )
+                          }
+                        >
+                          {copy.admin.remove}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -270,6 +355,25 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
               {copy.admin.edit}
             </Button>
           )}
+          {preDraw && group.sourceGroupId && (
+            <Button
+              variant="secondary"
+              fullWidth
+              disabled={busy}
+              onClick={() =>
+                void run(
+                  () =>
+                    api(`/api/groups/${groupId}`, {
+                      method: "PATCH",
+                      body: JSON.stringify({ avoidPrevious: !group.avoidPrevious }),
+                    }),
+                  group.avoidPrevious ? copy.create.avoidPrevious : copy.create.avoidPreviousOn,
+                )
+              }
+            >
+              {group.avoidPrevious ? "Quitar: no repetir pareja del año pasado" : copy.create.avoidPrevious}
+            </Button>
+          )}
           <Button
             variant="ghost"
             fullWidth
@@ -301,12 +405,15 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
               setBusy(true);
               try {
                 const res = await api<{
-                  emails?: { configured?: boolean; sent?: number; skipped?: number };
+                  emails?: { configured?: boolean; sent?: number; skipped?: number; failed?: number };
                 }>(`/api/groups/${groupId}/draw`, { method: "POST" });
                 await refresh();
                 const em = res.emails;
                 if (em?.configured && typeof em.sent === "number") {
-                  toast.show(copy.admin.drawnEmails(em.sent, em.skipped ?? 0), "ok");
+                  toast.show(
+                    copy.admin.drawnEmails(em.sent, em.skipped ?? 0, em.failed ?? 0),
+                    "ok",
+                  );
                 } else {
                   toast.show(copy.admin.drawn, "ok");
                 }

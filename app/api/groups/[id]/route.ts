@@ -4,6 +4,7 @@ import { jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { testToolsEnabled } from "@/lib/app/test-tools";
 import { listExclusions, listMembers, updateGroup } from "@/lib/db/groups";
 import type { GroupStatus } from "@/lib/db/types";
+import { canRevealNow } from "@/lib/time/reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,6 @@ function serializeGroup(
   exclusions: Awaited<ReturnType<typeof listExclusions>>,
 ) {
   const { group, member, isOwner } = access;
-  const drawn = group.status === "drawn" || group.status === "revealed";
   return {
     id: group.id,
     name: group.name,
@@ -30,19 +30,32 @@ function serializeGroup(
     inviteToken: isOwner ? group.invite_token : undefined,
     isOwner,
     myMemberId: member?.id ?? null,
-    members: members.map((m) => ({
-      id: m.id,
-      name: m.name,
-      email: isOwner ? m.email : undefined,
-      userId: m.user_id,
-      wishlist: {
-        ideas: m.wishlist_ideas,
-        sizes: m.wishlist_sizes,
-        links: m.wishlist_links,
-      },
-      // wishlist de otros solo visible post-sorteo para el que te tocó; listado admin ve todos
-      wishlistVisible: isOwner || m.id === member?.id || drawn,
-    })),
+    sourceGroupId: group.source_group_id ?? null,
+    avoidPrevious: Boolean(group.avoid_previous ?? true),
+    canReveal: group.status === "drawn" && canRevealNow(new Date(group.event_at)),
+    members: members.map((m) => {
+      const isMine = m.id === member?.id;
+      const canSeeWishlist = isOwner || isMine;
+      return {
+        id: m.id,
+        name: m.name,
+        email: isOwner ? m.email : undefined,
+        userId: m.user_id,
+        // Contenido solo para owner o dueño del wishlist. El receptor del
+        // sorteo usa /my-assignment; no filtramos por `drawn` aquí.
+        wishlist: canSeeWishlist
+          ? {
+              ideas: m.wishlist_ideas,
+              sizes: m.wishlist_sizes,
+              links: m.wishlist_links,
+            }
+          : { ideas: "", sizes: "", links: "" },
+        wishlistVisible: canSeeWishlist,
+        wishlistFilled: Boolean(
+          m.wishlist_ideas.trim() || m.wishlist_sizes.trim() || m.wishlist_links.trim(),
+        ),
+      };
+    }),
     exclusions: exclusions.map((e) => ({ aId: e.a_id, bId: e.b_id })),
     participantCount: members.length,
     testTools: isOwner && testToolsEnabled(),
@@ -77,6 +90,7 @@ type PatchBody = {
   rules?: string;
   status?: GroupStatus;
   archived?: boolean;
+  avoidPrevious?: boolean;
 };
 
 export async function PATCH(req: Request, ctx: Ctx) {
@@ -107,8 +121,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
       rules: body.rules,
       status: body.status === "closed" || body.status === "open" ? body.status : undefined,
       archived: body.archived,
+      avoidPrevious: body.avoidPrevious,
     });
-    return jsonOk({ id: updated?.id, status: updated?.status });
+    return jsonOk({
+      id: updated?.id,
+      status: updated?.status,
+      avoidPrevious: updated?.avoid_previous,
+    });
   } catch (e) {
     if ((e as { status?: number }).status === 401) return jsonError("unauthorized", 401);
     console.error(e);

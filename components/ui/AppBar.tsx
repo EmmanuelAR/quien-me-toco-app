@@ -14,7 +14,7 @@ export function AppBar() {
   const { data: session, isPending } = useSession();
   const user = session?.user;
   const isAuthenticated = Boolean(user);
-  const onDashboard = pathname === "/dashboard" || pathname === "/crear" || pathname === "/nuevo";
+  const onDashboard = pathname === "/dashboard" || pathname === "/nuevo";
 
   function salir() {
     sessionStorage.removeItem("qmt:return-to");

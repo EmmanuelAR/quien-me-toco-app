@@ -17,6 +17,10 @@ export interface AppMember {
   email?: string | null;
   userId?: string | null;
   wishlist: Wishlist;
+  /** true si el caller puede ver el contenido de wishlist */
+  wishlistVisible?: boolean;
+  /** hay texto en ideas/sizes/links (aunque el contenido no se exponga) */
+  wishlistFilled?: boolean;
 }
 
 export interface AppExclusion {
@@ -43,6 +47,10 @@ export interface AppGroup {
   participantCount: number;
   /** solo local/preview: permite botón de personas de prueba */
   testTools?: boolean;
+  sourceGroupId?: string | null;
+  avoidPrevious?: boolean;
+  /** admin: se puede revelar hoy (día del evento en CR) */
+  canReveal?: boolean;
 }
 
 export interface MyGroupSummary {

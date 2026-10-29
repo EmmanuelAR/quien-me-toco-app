@@ -1,19 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { AlertIcon, CheckIcon } from "@/components/ui/icons";
 import { copy } from "@/lib/copy/es-CR";
 import { cn } from "@/lib/cn";
 
 export interface RevealCardProps {
   receiverName: string;
-  sealedOk: boolean;
   /** se recuerda que ya se destapó en este dispositivo */
   storageKey: string;
 }
 
 /** la tarjeta "¿Quién me tocó?": se toca y destapa el nombre, grande y en negro */
-export function RevealCard({ receiverName, sealedOk, storageKey }: RevealCardProps) {
+export function RevealCard({ receiverName, storageKey }: RevealCardProps) {
   const [revealed, setRevealed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(storageKey) === "1";
@@ -51,10 +49,6 @@ export function RevealCard({ receiverName, sealedOk, storageKey }: RevealCardPro
           <p className="text-ink-soft">{copy.participant.youGot}</p>
           <p className="mt-2 max-w-full text-4xl font-semibold text-balance break-words">{receiverName}</p>
           <p className="mt-4 text-sm text-ink-soft">{copy.participant.shh}</p>
-          <p className="mt-8 flex items-start gap-1.5 text-left text-sm">
-            {sealedOk ? <CheckIcon className="mt-0.5 size-4" /> : <AlertIcon className="mt-0.5 size-4" />}
-            {sealedOk ? copy.participant.verifiedLocal : copy.verify.fail}
-          </p>
         </div>
       )}
     </section>

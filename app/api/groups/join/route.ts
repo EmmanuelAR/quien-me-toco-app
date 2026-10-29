@@ -3,6 +3,8 @@ import { jsonError, jsonOk, readJson } from "@/lib/api/http";
 import {
   OPEN_JOIN_CAP,
   addMember,
+  claimMember,
+  findClaimableMemberByEmail,
   findMemberByUser,
   getGroupByInvite,
   listMembers,
@@ -26,15 +28,25 @@ export async function POST(req: Request) {
     const existing = await findMemberByUser(group.id, user.id);
     if (existing) return jsonOk({ groupId: group.id, memberId: existing.id, already: true });
 
+    const name = (body?.name?.trim() || user.name).slice(0, 80);
+    const email = user.email || null;
+
+    const claimable = email ? await findClaimableMemberByEmail(group.id, email) : null;
+    if (claimable) {
+      const claimed = await claimMember(claimable.id, user.id, name, email);
+      if (claimed) {
+        return jsonOk({ groupId: group.id, memberId: claimed.id, already: false, claimed: true }, { status: 201 });
+      }
+    }
+
     const members = await listMembers(group.id);
     if (members.length >= OPEN_JOIN_CAP) return jsonError("cupo lleno", 409);
 
-    const name = (body?.name?.trim() || user.name).slice(0, 80);
     const member = await addMember({
       groupId: group.id,
       userId: user.id,
       name,
-      email: user.email || null,
+      email,
     });
     return jsonOk({ groupId: group.id, memberId: member.id, already: false }, { status: 201 });
   } catch (e) {
