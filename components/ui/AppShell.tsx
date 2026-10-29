@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { QaBanner } from "@/components/qa/QaBanner";
 import { AppBar } from "@/components/ui/AppBar";
 import { AppFooter } from "@/components/ui/AppFooter";
 
@@ -7,7 +6,6 @@ import { AppFooter } from "@/components/ui/AppFooter";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <QaBanner />
       <AppBar />
       <div className="flex flex-1 flex-col">{children}</div>
       <AppFooter />

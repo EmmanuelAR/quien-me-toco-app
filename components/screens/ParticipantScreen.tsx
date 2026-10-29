@@ -54,7 +54,9 @@ export function ParticipantScreen({ groupId }: { groupId: string }) {
     group?.members.map((m) => ({
       id: m.id,
       name: m.name,
-      filled: Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
+      filled:
+        m.wishlistFilled ??
+        Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
     })) ?? [];
 
   const saveMine = async (next: Wishlist) => {
@@ -161,7 +163,6 @@ export function ParticipantScreen({ groupId }: { groupId: string }) {
           <section className="space-y-4">
             <RevealCard
               receiverName={assignment.receiver.name}
-              sealedOk
               storageKey={`qmt:slip:${groupId}:${group.myMemberId}`}
             />
             <WishlistCard

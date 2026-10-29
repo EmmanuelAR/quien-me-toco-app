@@ -17,6 +17,10 @@ export interface AppMember {
   email?: string | null;
   userId?: string | null;
   wishlist: Wishlist;
+  /** true si el caller puede ver el contenido de wishlist */
+  wishlistVisible?: boolean;
+  /** hay texto en ideas/sizes/links (aunque el contenido no se exponga) */
+  wishlistFilled?: boolean;
 }
 
 export interface AppExclusion {

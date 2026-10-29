@@ -5,7 +5,7 @@ export const steps = [
   },
   {
     title: "Invitá por WhatsApp",
-    desc: "Compartí el link privado. Cada quien pone su nombre y su lista de deseos.",
+    desc: "Compartí el link. Cada quien entra con Google, pone su nombre y su lista de deseos.",
   },
   {
     title: "Hacé el sorteo",
@@ -13,14 +13,14 @@ export const steps = [
   },
   {
     title: "Revelá el día del intercambio",
-    desc: "Cada quien ve solo a quién le tocó. El organizador no ve nada hasta que todos destapan.",
+    desc: "Cada quien ve solo a quién le tocó. El mapa completo se destapa cuando quien organiza lo decide.",
   },
 ];
 
 export const benefits = [
   {
-    title: "100% gratis, sin registro obligatorio",
-    desc: "Solo quien organiza entra con Google o Apple. Los demás participan con el link.",
+    title: "100% gratis",
+    desc: "Organizás y participás entrando con Google. No hay planes premium ni funciones escondidas.",
   },
   {
     title: "Exclusiones de parejas",
@@ -31,23 +31,15 @@ export const benefits = [
     desc: "Cada participante pone qué quiere: ideas, tallas, links. Siempre actualizada.",
   },
   {
-    title: "Privacidad real",
-    desc: "Ni vos como organizador ves quién le tocó a quién hasta que todos destapan.",
+    title: "Privacidad del papelito",
+    desc: "Cada quien ve solo a quién le tocó. El mapa completo queda para el día de la revelación.",
   },
   {
-    title: "Sin repetir parejas del año pasado",
-    desc: "Si repetís el grupo, el sistema evita que te toque la misma persona que el año anterior.",
+    title: "Aviso al sortear",
+    desc: "Si configurás el correo, mandamos un mail a cada participante apenas se hace el sorteo.",
   },
   {
-    title: "Verificación pública del sorteo",
-    desc: "Cada asignación queda sellada en una cadena pública. Al revelar, cualquiera puede comprobar que fue justo.",
-  },
-  {
-    title: "Recordatorios automáticos",
-    desc: "Te mandamos un correo antes de la fecha para que no se te olvide comprar el regalo.",
-  },
-  {
-    title: "Funciona offline",
+    title: "Funciona como app",
     desc: "Instalalo en tu pantalla de inicio y abrilo como una app, sin barras del navegador.",
   },
 ];
@@ -59,15 +51,15 @@ export const faqs = [
   },
   {
     q: "¿Cómo sé que el sorteo es justo?",
-    a: "Cada asignación queda sellada en Starknet, una cadena pública, antes de que nadie sepa nada. Al revelar, se abren los sellos y cualquiera puede verificar que coinciden.",
+    a: "El sorteo corre en el servidor con un algoritmo que respeta exclusiones. Nadie ve el mapa completo hasta que quien organiza destapa la revelación.",
   },
   {
     q: "¿Puedo ver quién le tocó a quién?",
-    a: "No, ni siquiera como organizador. Cada participante ve solo su propio papelito. El día del intercambio, todos revelan juntos.",
+    a: "No. Cada participante ve solo su propio papelito. El día del intercambio, quien organiza puede destapar el mapa completo para todos.",
   },
   {
-    q: "¿Qué pasa si alguien no tiene smartphone?",
-    a: "Podés agregar 'participantes sin cuenta'. Vos les pasás un link privado por WhatsApp y ellos ven su papelito sin necesidad de entrar a la app.",
+    q: "¿Necesito cuenta?",
+    a: "Sí: organizador y participantes entran con Google. Así cada quien recupera su grupo y su papelito en cualquier dispositivo.",
   },
   {
     q: "¿Funciona en iPhone y Android?",
@@ -75,11 +67,11 @@ export const faqs = [
   },
   {
     q: "¿Puedo repetir el grupo el próximo año?",
-    a: "Sí. Hay un botón para clonar el grupo con los mismos participantes sin cuenta, el mismo presupuesto y todo. Solo cambiás la fecha.",
+    a: "Sí. Hay un atajo para crear un grupo nuevo partiendo de los datos del anterior (nombre, lugar, presupuesto, reglas). Volvés a invitar a la gente.",
   },
   {
     q: "¿Mis datos están seguros?",
-    a: "Los nombres y deseos quedan en una cadena pública (Starknet Sepolia). Los correos se guardan temporalmente solo para enviarte tu papelito y se borran después del intercambio.",
+    a: "Los grupos viven en una base de datos privada (Neon). Se borran automáticamente unos días después del evento. Los correos solo se usan si mandamos el aviso del sorteo.",
   },
   {
     q: "¿Puedo poner exclusiones?",

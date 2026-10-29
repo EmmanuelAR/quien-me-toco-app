@@ -47,7 +47,9 @@ export function AdminScreen({ groupId, justCreated }: { groupId: string; justCre
   const wishlistRows = members.map((m) => ({
     id: m.id,
     name: m.name,
-    filled: Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
+    filled:
+      m.wishlistFilled ??
+      Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
   }));
 
   const tabs = useMemo(
