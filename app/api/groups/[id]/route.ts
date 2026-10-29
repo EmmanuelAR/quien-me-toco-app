@@ -4,6 +4,7 @@ import { jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { testToolsEnabled } from "@/lib/app/test-tools";
 import { listExclusions, listMembers, updateGroup } from "@/lib/db/groups";
 import type { GroupStatus } from "@/lib/db/types";
+import { canRevealNow } from "@/lib/time/reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,9 @@ function serializeGroup(
     inviteToken: isOwner ? group.invite_token : undefined,
     isOwner,
     myMemberId: member?.id ?? null,
+    sourceGroupId: group.source_group_id ?? null,
+    avoidPrevious: Boolean(group.avoid_previous ?? true),
+    canReveal: group.status === "drawn" && canRevealNow(new Date(group.event_at)),
     members: members.map((m) => {
       const isMine = m.id === member?.id;
       const canSeeWishlist = isOwner || isMine;
@@ -86,6 +90,7 @@ type PatchBody = {
   rules?: string;
   status?: GroupStatus;
   archived?: boolean;
+  avoidPrevious?: boolean;
 };
 
 export async function PATCH(req: Request, ctx: Ctx) {
@@ -116,8 +121,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
       rules: body.rules,
       status: body.status === "closed" || body.status === "open" ? body.status : undefined,
       archived: body.archived,
+      avoidPrevious: body.avoidPrevious,
     });
-    return jsonOk({ id: updated?.id, status: updated?.status });
+    return jsonOk({
+      id: updated?.id,
+      status: updated?.status,
+      avoidPrevious: updated?.avoid_previous,
+    });
   } catch (e) {
     if ((e as { status?: number }).status === 401) return jsonError("unauthorized", 401);
     console.error(e);

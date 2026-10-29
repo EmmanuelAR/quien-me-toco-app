@@ -20,6 +20,8 @@ interface FormState {
   budgetMax: string;
   currency: Currency;
   rules: string;
+  cloneMembers: boolean;
+  avoidPrevious: boolean;
 }
 
 function defaultWhen(): string {
@@ -42,25 +44,30 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: string | nul
     budgetMax: "10000",
     currency: "CRC",
     rules: "",
+    cloneMembers: true,
+    avoidPrevious: true,
   });
 
   useEffect(() => {
     if (!repeatFromId || !isAuthenticated) return;
-    void api<{ group: { name: string; place: string; budgetMax: number; currency: string; rules: string; eventAt: number } }>(
-      `/api/groups/${repeatFromId}`,
-    )
+    void api<{
+      group: { name: string; place: string; budgetMax: number; currency: string; rules: string; eventAt: number };
+    }>(`/api/groups/${repeatFromId}`)
       .then((res) => {
         const g = res.group;
         const d = new Date(g.eventAt * 1000);
         d.setFullYear(d.getFullYear() + 1);
-        setForm({
+        setForm((f) => ({
+          ...f,
           name: g.name,
           when: toDatetimeLocalValue(Math.floor(d.getTime() / 1000)),
           place: g.place,
           budgetMax: String(g.budgetMax || 10000),
           currency: (g.currency as Currency) || "CRC",
           rules: g.rules,
-        });
+          cloneMembers: true,
+          avoidPrevious: true,
+        }));
       })
       .catch(() => undefined);
   }, [repeatFromId, isAuthenticated]);
@@ -81,6 +88,13 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: string | nul
           budgetMax: Number(form.budgetMax) || 0,
           currency: form.currency,
           rules: form.rules.trim(),
+          ...(repeatFromId
+            ? {
+                fromGroupId: repeatFromId,
+                cloneMembers: form.cloneMembers,
+                avoidPrevious: form.avoidPrevious,
+              }
+            : {}),
         }),
       });
       router.replace(`/g/${created.id}/admin?nuevo=1`);
@@ -103,14 +117,17 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: string | nul
       <Page>
         <AppHeader backHref="/" title={copy.create.title} />
         <p className="mb-6 text-pretty text-ink-soft">{copy.auth.needLogin}</p>
-        <GoogleLoginButton callbackURL="/nuevo" />
+        <GoogleLoginButton callbackURL={repeatFromId ? `/nuevo?desde=${repeatFromId}` : "/nuevo"} />
       </Page>
     );
   }
 
   return (
     <Page>
-      <AppHeader backHref="/dashboard" title={copy.create.title} />
+      <AppHeader
+        backHref="/dashboard"
+        title={repeatFromId ? copy.create.repeatTitle : copy.create.title}
+      />
       <form className="flex flex-col gap-5 pb-10" onSubmit={(e) => void submit(e)}>
         <Field
           label={copy.create.name}
@@ -146,6 +163,31 @@ export function CreateGroupScreen({ repeatFromId }: { repeatFromId: string | nul
           rows={3}
           maxLength={2000}
         />
+        {repeatFromId && (
+          <div className="space-y-3 rounded-lg border border-line p-4">
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={form.cloneMembers}
+                onChange={(e) => setForm((f) => ({ ...f, cloneMembers: e.target.checked }))}
+              />
+              <span>
+                <span className="font-medium">{copy.create.cloneMembers}</span>
+                <span className="mt-1 block text-ink-soft">{copy.create.cloneMembersHint}</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={form.avoidPrevious}
+                onChange={(e) => setForm((f) => ({ ...f, avoidPrevious: e.target.checked }))}
+              />
+              <span className="font-medium">{copy.create.avoidPrevious}</span>
+            </label>
+          </div>
+        )}
         <Button type="submit" size="lg" fullWidth disabled={busy || !form.name.trim()} loading={busy}>
           {copy.create.submit}
         </Button>

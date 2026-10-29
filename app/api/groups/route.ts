@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth/server";
 import { jsonError, jsonOk, readJson } from "@/lib/api/http";
-import { createGroup } from "@/lib/db/groups";
+import { createGroup, getGroup } from "@/lib/db/groups";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,9 @@ type Body = {
   budgetMax?: number;
   currency?: string;
   rules?: string;
+  fromGroupId?: string;
+  cloneMembers?: boolean;
+  avoidPrevious?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -21,6 +24,16 @@ export async function POST(req: Request) {
     if (!body?.name?.trim() || !body.eventAt) return jsonError("datos incompletos", 400);
     const eventAt = new Date(body.eventAt);
     if (Number.isNaN(eventAt.getTime())) return jsonError("fecha inválida", 400);
+
+    let fromGroupId: string | null = null;
+    if (body.fromGroupId) {
+      const source = await getGroup(body.fromGroupId);
+      if (!source || source.owner_user_id !== user.id) {
+        return jsonError("grupo anterior inválido", 403);
+      }
+      fromGroupId = source.id;
+    }
+
     const budgetMin = Math.max(0, Number(body.budgetMin ?? 0));
     const budgetMax = Math.max(budgetMin, Number(body.budgetMax ?? budgetMin));
     const group = await createGroup({
@@ -34,12 +47,18 @@ export async function POST(req: Request) {
       ownerUserId: user.id,
       ownerName: user.name,
       ownerEmail: user.email || null,
+      fromGroupId,
+      cloneMembers: body.cloneMembers !== false,
+      avoidPrevious: body.avoidPrevious !== false,
     });
-    return jsonOk({
-      id: group.id,
-      inviteToken: group.invite_token,
-      status: group.status,
-    }, { status: 201 });
+    return jsonOk(
+      {
+        id: group.id,
+        inviteToken: group.invite_token,
+        status: group.status,
+      },
+      { status: 201 },
+    );
   } catch (e) {
     if ((e as { status?: number }).status === 401) return jsonError("unauthorized", 401);
     console.error(e);

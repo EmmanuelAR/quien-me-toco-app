@@ -47,6 +47,10 @@ export interface AppGroup {
   participantCount: number;
   /** solo local/preview: permite botón de personas de prueba */
   testTools?: boolean;
+  sourceGroupId?: string | null;
+  avoidPrevious?: boolean;
+  /** admin: se puede revelar hoy (día del evento en CR) */
+  canReveal?: boolean;
 }
 
 export interface MyGroupSummary {

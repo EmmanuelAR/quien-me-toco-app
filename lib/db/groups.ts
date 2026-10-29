@@ -46,6 +46,15 @@ export async function getGroupByInvite(token: string): Promise<GroupRow | null> 
   return (rows[0] as GroupRow) ?? null;
 }
 
+function normEmail(email: string | null | undefined): string | null {
+  const e = email?.trim().toLowerCase();
+  return e || null;
+}
+
+function normName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
 export async function createGroup(input: {
   name: string;
   eventAt: Date;
@@ -57,18 +66,25 @@ export async function createGroup(input: {
   ownerUserId: string;
   ownerName: string;
   ownerEmail: string | null;
+  fromGroupId?: string | null;
+  cloneMembers?: boolean;
+  avoidPrevious?: boolean;
 }): Promise<GroupRow> {
   const sql = db();
   const token = newInviteToken();
   const purge = purgeAfterFromEvent(input.eventAt);
+  const fromId = input.fromGroupId ?? null;
+  const avoidPrevious = input.avoidPrevious !== false;
   const groups = await sql`
     insert into groups (
       name, event_at, place, budget_min, budget_max, currency, rules,
-      status, owner_user_id, invite_token, purge_after
+      status, owner_user_id, invite_token, purge_after,
+      source_group_id, avoid_previous
     ) values (
       ${input.name}, ${input.eventAt.toISOString()}, ${input.place},
       ${input.budgetMin}, ${input.budgetMax}, ${input.currency}, ${input.rules},
-      'open', ${input.ownerUserId}, ${token}, ${purge.toISOString()}
+      'open', ${input.ownerUserId}, ${token}, ${purge.toISOString()},
+      ${fromId}, ${avoidPrevious}
     )
     returning *
   `;
@@ -77,6 +93,50 @@ export async function createGroup(input: {
     insert into members (group_id, user_id, name, email)
     values (${group.id}, ${input.ownerUserId}, ${input.ownerName}, ${input.ownerEmail})
   `;
+
+  if (fromId && input.cloneMembers !== false) {
+    const source = await getGroup(fromId);
+    if (source && source.owner_user_id === input.ownerUserId) {
+      const [sourceMembers, sourceExclusions] = await Promise.all([
+        listMembers(fromId),
+        listExclusions(fromId),
+      ]);
+      const idMap = new Map<string, string>();
+      const ownerSource =
+        sourceMembers.find((m) => m.user_id === source.owner_user_id) ?? sourceMembers[0];
+      const newOwner = (await listMembers(group.id))[0];
+      if (ownerSource && newOwner) idMap.set(ownerSource.id, newOwner.id);
+
+      for (const m of sourceMembers) {
+        if (ownerSource && m.id === ownerSource.id) continue;
+        const email = normEmail(m.email);
+        if (email && email === normEmail(input.ownerEmail)) continue;
+        const created = await addMember({
+          groupId: group.id,
+          userId: null,
+          name: m.name,
+          email: m.email,
+          wishlist: {
+            ideas: m.wishlist_ideas,
+            sizes: m.wishlist_sizes,
+            links: m.wishlist_links,
+          },
+        });
+        idMap.set(m.id, created.id);
+      }
+
+      const pairs = sourceExclusions
+        .map((e) => {
+          const aId = idMap.get(e.a_id);
+          const bId = idMap.get(e.b_id);
+          if (!aId || !bId || aId === bId) return null;
+          return { aId, bId };
+        })
+        .filter((p): p is { aId: string; bId: string } => Boolean(p));
+      if (pairs.length) await setExclusions(group.id, pairs);
+    }
+  }
+
   return group;
 }
 
@@ -92,6 +152,7 @@ export async function updateGroup(
     rules: string;
     status: GroupStatus;
     archived: boolean;
+    avoidPrevious: boolean;
   }>,
 ): Promise<GroupRow | null> {
   const current = await getGroup(id);
@@ -105,6 +166,7 @@ export async function updateGroup(
   const rules = patch.rules ?? current.rules;
   const status = patch.status ?? current.status;
   const archived = patch.archived ?? current.archived;
+  const avoidPrevious = patch.avoidPrevious ?? current.avoid_previous ?? true;
   const purge = purgeAfterFromEvent(eventAt);
   const rows = await db()`
     update groups set
@@ -117,6 +179,7 @@ export async function updateGroup(
       rules = ${rules},
       status = ${status},
       archived = ${archived},
+      avoid_previous = ${avoidPrevious},
       purge_after = ${purge.toISOString()}
     where id = ${id}
     returning *
@@ -139,6 +202,38 @@ export async function getMember(id: string): Promise<MemberRow | null> {
 export async function findMemberByUser(groupId: string, userId: string): Promise<MemberRow | null> {
   const rows = await db()`
     select * from members where group_id = ${groupId} and user_id = ${userId} limit 1
+  `;
+  return (rows[0] as MemberRow) ?? null;
+}
+
+/** asiento clonado sin Google: se reclama al entrar con el mismo correo */
+export async function findClaimableMemberByEmail(
+  groupId: string,
+  email: string,
+): Promise<MemberRow | null> {
+  const e = normEmail(email);
+  if (!e) return null;
+  const rows = await db()`
+    select * from members
+    where group_id = ${groupId} and user_id is null and lower(email) = ${e}
+    limit 1
+  `;
+  return (rows[0] as MemberRow) ?? null;
+}
+
+export async function claimMember(
+  memberId: string,
+  userId: string,
+  name: string,
+  email: string | null,
+): Promise<MemberRow | null> {
+  const rows = await db()`
+    update members set
+      user_id = ${userId},
+      name = ${name},
+      email = ${email}
+    where id = ${memberId} and user_id is null
+    returning *
   `;
   return (rows[0] as MemberRow) ?? null;
 }
@@ -260,6 +355,55 @@ export async function getAssignmentForGiver(groupId: string, giverId: string): P
   return (rows[0] as AssignmentRow) ?? null;
 }
 
+/** previous[i] = índice del receptor del año pasado para members[i], o null */
+export async function previousReceiversForGroup(
+  group: GroupRow,
+  members: MemberRow[],
+): Promise<Array<number | null> | undefined> {
+  if (group.avoid_previous === false || !group.source_group_id) return undefined;
+  const source = await getGroup(group.source_group_id);
+  if (!source) return undefined;
+  const [oldMembers, oldAssignments] = await Promise.all([
+    listMembers(source.id),
+    listAssignments(source.id),
+  ]);
+  if (!oldAssignments.length) return undefined;
+
+  const oldById = new Map(oldMembers.map((m) => [m.id, m]));
+  const newIndexByKey = new Map<string, number>();
+  members.forEach((m, i) => {
+    const email = normEmail(m.email);
+    if (email) newIndexByKey.set(`e:${email}`, i);
+    newIndexByKey.set(`n:${normName(m.name)}`, i);
+    if (m.user_id === group.owner_user_id) newIndexByKey.set("owner", i);
+  });
+
+  const oldIndexToNew = new Map<string, number>();
+  for (const om of oldMembers) {
+    const email = normEmail(om.email);
+    let idx: number | undefined;
+    if (om.user_id === source.owner_user_id) idx = newIndexByKey.get("owner");
+    if (idx === undefined && email) idx = newIndexByKey.get(`e:${email}`);
+    if (idx === undefined) idx = newIndexByKey.get(`n:${normName(om.name)}`);
+    if (idx !== undefined) oldIndexToNew.set(om.id, idx);
+  }
+
+  const previous: Array<number | null> = members.map(() => null);
+  for (const a of oldAssignments) {
+    const giverNew = oldIndexToNew.get(a.giver_id);
+    const receiverOld = oldById.get(a.receiver_id);
+    if (giverNew === undefined || !receiverOld) continue;
+    const email = normEmail(receiverOld.email);
+    let recv =
+      (receiverOld.user_id === source.owner_user_id ? newIndexByKey.get("owner") : undefined) ??
+      (email ? newIndexByKey.get(`e:${email}`) : undefined) ??
+      newIndexByKey.get(`n:${normName(receiverOld.name)}`);
+    if (recv === undefined) continue;
+    previous[giverNew] = recv;
+  }
+  return previous.some((p) => p !== null) ? previous : undefined;
+}
+
 export async function runDraw(groupId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const group = await getGroup(groupId);
   if (!group) return { ok: false, error: "not_found" };
@@ -278,7 +422,8 @@ export async function runDraw(groupId: string): Promise<{ ok: true } | { ok: fal
     pairs.push([a, b]);
   }
 
-  const receivers = assign({ n: members.length, pairs });
+  const previous = await previousReceiversForGroup(group, members);
+  const receivers = assign({ n: members.length, pairs, previous });
   if (!receivers) return { ok: false, error: "infeasible" };
 
   const sql = db();
@@ -295,4 +440,25 @@ export async function runDraw(groupId: string): Promise<{ ok: true } | { ok: fal
 
 export async function purgeExpiredGroups() {
   await db()`delete from groups where purge_after < now()`;
+}
+
+/** grupos drawn/revealed con evento en las próximas ~36h y sin reminder */
+export async function listGroupsNeedingReminder(now = new Date()): Promise<GroupRow[]> {
+  const from = now.toISOString();
+  const to = new Date(now.getTime() + 36 * 60 * 60 * 1000).toISOString();
+  const rows = await db()`
+    select * from groups
+    where archived = false
+      and reminder_sent_at is null
+      and status in ('drawn', 'revealed')
+      and event_at >= ${from}
+      and event_at <= ${to}
+    order by event_at asc
+    limit 50
+  `;
+  return rows as GroupRow[];
+}
+
+export async function markReminderSent(groupId: string) {
+  await db()`update groups set reminder_sent_at = now() where id = ${groupId}`;
 }

@@ -1,13 +1,24 @@
+import { getOptionalUser } from "@/lib/auth/server";
 import { buildIcs } from "@/lib/calendar";
-import { getGroup } from "@/lib/db/groups";
+import { findMemberByUser, getGroup } from "@/lib/db/groups";
 
 export const dynamic = "force-dynamic";
 
-/** el evento del intercambio como archivo .ics (apple calendar, outlook, etc.) */
+/** .ics solo para dueño o miembro del grupo */
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  const user = await getOptionalUser();
+  if (!user) return new Response("unauthorized", { status: 401 });
+
   const group = await getGroup(id).catch(() => null);
-  if (!group || group.archived) return new Response("no existe", { status: 404 });
+  if (!group || (group.archived && group.owner_user_id !== user.id)) {
+    return new Response("no existe", { status: 404 });
+  }
+
+  const isOwner = group.owner_user_id === user.id;
+  const member = isOwner ? true : await findMemberByUser(id, user.id);
+  if (!isOwner && !member) return new Response("forbidden", { status: 403 });
+
   const eventAt = Math.floor(new Date(group.event_at).getTime() / 1000);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(_req.url).origin;
   const ics = buildIcs({

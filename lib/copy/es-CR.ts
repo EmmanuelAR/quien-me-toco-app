@@ -79,6 +79,8 @@ export const copy = {
     avoidPrevious: "Que no te toque la misma persona del año pasado",
     avoidPreviousOn: "La opción «Que no te toque la misma persona del año pasado» viene activada. La podés apagar en el panel.",
     created: "Listo. Ahora compartí el link para que se apunten.",
+    cloneMembers: "Traer a la gente del grupo anterior",
+    cloneMembersHint: "Se copian nombres, correos, wishlists y exclusiones. Ellos reclaman su lugar al entrar con Google.",
     stage2: "Etapa 2: invitá a la gente",
     stage2Hint: "Mandá el link por WhatsApp. Cada quien entra con Google y pone su nombre.",
     errors: {
@@ -172,12 +174,16 @@ export const copy = {
     drawConfirm: "Se sortea con quien ya está apuntado. Una vez hecho, queda fijo. ¿Dale?",
     drawing: "Mezclando los papelitos…",
     drawn: "Sorteo hecho. Cada quien ve a quién le tocó en la app.",
-    drawnEmails: (sent: number, skipped: number) =>
-      sent === 0
-        ? skipped > 0
+    drawnEmails: (sent: number, skipped: number, failed = 0) => {
+      if (!sent && !failed) {
+        return skipped > 0
           ? "Sorteo hecho. Nadie tenía correo para avisar."
-          : "Sorteo hecho. (Resend no está configurado.)"
-        : `Sorteo hecho. Correos enviados: ${sent}.`,
+          : "Sorteo hecho. (Resend no está configurado.)";
+      }
+      const failBit = failed > 0 ? ` Fallaron: ${failed}.` : "";
+      return `Sorteo hecho. Correos enviados: ${sent}.${failBit}`;
+    },
+    emailsRetryOk: "Reintento de correos listo.",
     emails: (sent: number, total: number) => `Correos enviados: ${sent} de ${total}`,
     emailsLabel: "Correos",
     emailStatus: {
