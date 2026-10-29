@@ -21,9 +21,16 @@ import type { MyGroup } from "@/components/data/useMyGroups";
 
 const row = "flex items-center gap-3 py-4 transition-opacity active:opacity-60";
 
-function GroupRow({ item }: { item: MyGroup }) {
+function GroupRow({
+  item,
+  view,
+}: {
+  item: MyGroup;
+  /** From "Participo", open the member view even if the user also organizes. */
+  view: "admin" | "participant";
+}) {
   const { group, isAdmin, isParticipant } = item;
-  const href = isAdmin ? `/g/${group.id}/admin` : `/g/${group.id}`;
+  const href = view === "admin" && isAdmin ? `/g/${group.id}/admin` : `/g/${group.id}`;
   const badge =
     isAdmin && isParticipant
       ? copy.home.bothBadge
@@ -55,11 +62,13 @@ function GroupSection({
   items,
   empty,
   loading,
+  view,
 }: {
   title: string;
   items: MyGroup[];
   empty: string;
   loading: boolean;
+  view: "admin" | "participant";
 }) {
   return (
     <section aria-label={title} className="min-w-0">
@@ -71,7 +80,7 @@ function GroupSection({
       ) : (
         <ul className="mt-3 divide-y divide-line border-y border-line">
           {items.map((item) => (
-            <GroupRow key={item.group.id} item={item} />
+            <GroupRow key={`${view}-${item.group.id}`} item={item} view={view} />
           ))}
         </ul>
       )}
@@ -95,7 +104,9 @@ export function DashboardScreen() {
 
   const active = groups?.filter((g) => !g.group.archived) ?? [];
   const organizing = active.filter((g) => g.isAdmin);
-  const participating = active.filter((g) => g.isParticipant && !g.isAdmin);
+  // Include hosts who also joined as members (role "both"); the old
+  // `!g.isAdmin` filter hid those from "Participo" even with the badge.
+  const participating = active.filter((g) => g.isParticipant);
   const archived = groups?.filter((g) => g.group.archived && g.isAdmin) ?? [];
   const listLoading = loading && !groups;
   const showInstall = isAuthenticated && active.length > 0;
@@ -139,12 +150,14 @@ export function DashboardScreen() {
               items={organizing}
               empty={copy.home.noOrganizing}
               loading={listLoading}
+              view="admin"
             />
             <GroupSection
               title={copy.home.participating}
               items={participating}
               empty={copy.home.noParticipating}
               loading={listLoading}
+              view="participant"
             />
             {archived.length > 0 && (
               <div className="lg:col-span-2">
@@ -153,6 +166,7 @@ export function DashboardScreen() {
                   items={archived}
                   empty=""
                   loading={false}
+                  view="admin"
                 />
               </div>
             )}
