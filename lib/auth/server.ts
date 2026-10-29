@@ -1,5 +1,12 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { createNeonAuth } from "@neondatabase/auth/next/server";
+import {
+  QA_PERSONA_COOKIE,
+  parseQaPersona,
+  qaAuthBypassServerEnabled,
+  qaUserForPersona,
+} from "@/lib/auth/qa";
 
 function authConfig() {
   const baseUrl = process.env.NEON_AUTH_BASE_URL;
@@ -25,7 +32,17 @@ export type SessionUser = {
   image?: string | null;
 };
 
+async function qaBypassUser(): Promise<SessionUser | null> {
+  if (!qaAuthBypassServerEnabled()) return null;
+  const jar = await cookies();
+  const persona = parseQaPersona(jar.get(QA_PERSONA_COOKIE)?.value);
+  return qaUserForPersona(persona);
+}
+
 export async function requireUser(): Promise<SessionUser> {
+  const bypass = await qaBypassUser();
+  if (bypass) return bypass;
+
   const { data: session } = await auth.getSession();
   const user = session?.user;
   if (!user?.id) {
@@ -42,6 +59,11 @@ export async function requireUser(): Promise<SessionUser> {
 }
 
 export async function getOptionalUser(): Promise<SessionUser | null> {
+  const bypass = await qaBypassUser();
+  if (bypass) return bypass;
+  // persona "off" with bypass still means logged out for optional checks
+  if (qaAuthBypassServerEnabled()) return null;
+
   try {
     const { data: session } = await auth.getSession();
     const user = session?.user;
