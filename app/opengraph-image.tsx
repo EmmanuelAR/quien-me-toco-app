@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "Amigo secreto online gratis - ¿Quién me tocó?";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -16,8 +15,8 @@ export default function Image() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#fff",
-          padding: 60,
+          backgroundColor: "#ffffff",
+          padding: 80,
         }}
       >
         <div
@@ -25,33 +24,27 @@ export default function Image() {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 24,
+            gap: 20,
           }}
         >
           <div
             style={{
-              fontSize: 120,
-              display: "flex",
-            }}
-          >
-            🎁
-          </div>
-          <div
-            style={{
-              fontSize: 64,
-              fontWeight: 700,
+              fontSize: 72,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
               textAlign: "center",
-              color: "#1D1D1F",
+              color: "#1d1d1f",
             }}
           >
             ¿Quién me tocó?
           </div>
           <div
             style={{
-              fontSize: 32,
+              fontSize: 28,
               textAlign: "center",
-              color: "#666",
-              maxWidth: 800,
+              color: "#6e6e73",
+              maxWidth: 720,
+              lineHeight: 1.4,
             }}
           >
             Amigo secreto online gratis. Sorteo por WhatsApp, exclusiones, lista de deseos.
@@ -61,6 +54,6 @@ export default function Image() {
     ),
     {
       ...size,
-    }
+    },
   );
 }

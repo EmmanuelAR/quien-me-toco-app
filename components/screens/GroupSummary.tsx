@@ -1,36 +1,28 @@
-import { GroupStatus, type Group } from "@/lib/contract/types";
+import type { AppGroup, GroupStatus } from "@/lib/app/types";
 import { copy } from "@/lib/copy/es-CR";
 import { capitalize, formatBudget, formatDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-export function statusLabel(status: Group["status"]): string {
+export function statusLabel(status: GroupStatus): string {
   switch (status) {
-    case GroupStatus.Open:
+    case "open":
       return copy.status.open;
-    case GroupStatus.Closed:
+    case "closed":
       return copy.status.closed;
-    case GroupStatus.DrawRequested:
-      return copy.status.drawRequested;
-    case GroupStatus.Drawn:
+    case "drawn":
       return copy.status.drawn;
-    case GroupStatus.RevealRequested:
-      return copy.status.revealRequested;
-    case GroupStatus.Revealed:
+    case "revealed":
       return copy.status.revealed;
   }
 }
 
-/** los cuatro pasos que se ven; "sorteando…" y "revelando…" ocupan el lugar del paso que viene */
-const STEPS = [GroupStatus.Open, GroupStatus.Closed, GroupStatus.Drawn, GroupStatus.Revealed] as const;
+const STEPS: GroupStatus[] = ["open", "closed", "drawn", "revealed"];
 
-function currentStep(status: Group["status"]): number {
-  if (status >= GroupStatus.RevealRequested) return 3;
-  if (status >= GroupStatus.DrawRequested) return 2;
-  return status === GroupStatus.Closed ? 1 : 0;
+function currentStep(status: GroupStatus): number {
+  return STEPS.indexOf(status);
 }
 
-/** en qué va el grupo. compact: solo las rayitas y el paso actual, para las listas */
-export function GroupProgress({ status, compact = false }: { status: Group["status"]; compact?: boolean }) {
+export function GroupProgress({ status, compact = false }: { status: GroupStatus; compact?: boolean }) {
   const current = currentStep(status);
   const bar = (i: number) => cn("rounded-pill", i <= current ? "bg-ink" : "bg-line");
 
@@ -61,7 +53,6 @@ export function GroupProgress({ status, compact = false }: { status: Group["stat
   );
 }
 
-/** filas de dato y valor separadas por una línea fina */
 export function DetailList({ rows }: { rows: Array<[label: string, value: string]> }) {
   return (
     <dl className="divide-y divide-line border-y border-line">
@@ -75,10 +66,12 @@ export function DetailList({ rows }: { rows: Array<[label: string, value: string
   );
 }
 
-export function GroupSummary({ group }: { group: Group }) {
+export function GroupSummary({ group }: { group: Pick<AppGroup, "eventAt" | "place" | "budgetMin" | "budgetMax" | "currency" | "rules"> }) {
   const rows: Array<[string, string]> = [[copy.participant.when, capitalize(formatDate(group.eventAt, { withTime: true }))]];
   if (group.place) rows.push([copy.participant.where, group.place]);
-  rows.push([copy.participant.budgetLabel, formatBudget(group.budgetMin, group.budgetMax, group.currency || "CRC")]);
+  if (group.budgetMax > 0) {
+    rows.push([copy.participant.budgetLabel, formatBudget(group.budgetMin, group.budgetMax, group.currency)]);
+  }
   if (group.rules) rows.push([copy.participant.rulesLabel, group.rules]);
   return <DetailList rows={rows} />;
 }

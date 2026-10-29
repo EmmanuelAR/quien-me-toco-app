@@ -2,26 +2,20 @@ import type { NextConfig } from "next";
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cavos.dev https://*.cavos.dev",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.starknet.io https://*.zan.top https://cavos.dev https://*.cavos.dev wss://*.cavos.dev https://free-rpc.nethermind.io",
-  "frame-src 'self' https://cavos.dev https://*.cavos.dev",
+  "connect-src 'self' https://*.neon.tech https://*.aws.neon.tech https://accounts.google.com https://oauth2.googleapis.com",
+  "frame-src 'self' https://accounts.google.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://accounts.google.com",
   "upgrade-insecure-requests",
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  // la app lee la chain desde el navegador y casi todo es dinámico:
-  // el modelo clásico (sin cache components) es más simple para este caso.
   cacheComponents: false,
-  experimental: {
-    // con la caché que vercel restaura entre deploys, el css de tailwind salía de un build viejo
-    turbopackFileSystemCacheForBuild: false,
-  },
   reactStrictMode: true,
   poweredByHeader: false,
   turbopack: {
@@ -54,7 +48,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // un día: las caritas e íconos se van a reemplazar por las ilustraciones finales
         source: "/(icons|stamps)/(.*)",
         headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
       },

@@ -6,7 +6,7 @@ import { capitalize, formatBudget, formatDate, formatDateTimeLong, formatMoney }
 import { TeToco } from "@/emails/TeToco";
 
 const event = {
-  groupId: 5n,
+  groupId: "5",
   name: "navidad familia aguero",
   eventAt: Date.UTC(2026, 11, 24, 2, 0, 0) / 1000, // 23 dic 8pm costa rica
   place: "casa de la abuela",

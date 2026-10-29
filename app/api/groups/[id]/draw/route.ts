@@ -1,37 +1,39 @@
-import { runDraw } from "@/lib/server/draw";
-import { sendDrawEmails } from "@/lib/server/emails";
-import { handleError, json, parseGroupId } from "@/lib/server/http";
+import { requireUser } from "@/lib/auth/server";
+import { loadGroupAccess } from "@/lib/api/authz";
+import { jsonError, jsonOk } from "@/lib/api/http";
+import { listMembers, runDraw } from "@/lib/db/groups";
+import { MIN_PARTICIPANTS } from "@/lib/draw/assign";
+import { notifyDrawEmails } from "@/lib/mail/notify-draw";
 
-export const maxDuration = 120;
+export const dynamic = "force-dynamic";
 
-/**
- * worker del sorteo. no necesita login: solo actúa si el contrato está en DrawRequested,
- * y eso solo lo pone la admin con su wallet.
- */
-export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function POST(_req: Request, ctx: Ctx) {
   try {
+    const user = await requireUser();
     const { id } = await ctx.params;
-    const groupId = parseGroupId(id);
-    if (!groupId) return json({ error: "grupo inválido" }, 400);
+    const access = await loadGroupAccess(id, user.id);
+    if (!access) return jsonError("not_found", 404);
+    if (!access.isOwner) return jsonError("forbidden", 403);
 
-    const result = await runDraw(groupId);
+    const members = await listMembers(id);
+    if (members.length < MIN_PARTICIPANTS) {
+      return jsonError(`necesitás al menos ${MIN_PARTICIPANTS} personas`, 400, { code: "too_few" });
+    }
+
+    const result = await runDraw(id);
     if (!result.ok) {
-      if (result.reason === "infeasible") {
-        return json({ error: "infeasible", message: "con estas reglas no sale el sorteo, quitá alguna exclusión" }, 422);
-      }
-      return json({ error: "wrong-status", status: result.status }, 409);
+      const status = result.error === "infeasible" ? 422 : result.error === "locked" ? 409 : 400;
+      return jsonError(result.error, status, { code: result.error });
     }
 
-    // los correos salen después de que la cadena aceptó el sorteo; si algo falla aquí,
-    // la admin lo ve en "correos enviados" y puede reintentar.
-    let emails = null;
-    try {
-      emails = await sendDrawEmails(groupId);
-    } catch (e) {
-      console.error("[draw] correos", e);
-    }
-    return json({ ok: true, already: result.already, txHash: result.txHash, emails });
+    // el sorteo ya quedó; los correos son best-effort
+    const emails = await notifyDrawEmails(id);
+    return jsonOk({ ok: true, status: "drawn", emails });
   } catch (e) {
-    return handleError(e);
+    if ((e as { status?: number }).status === 401) return jsonError("unauthorized", 401);
+    console.error(e);
+    return jsonError("error", 500);
   }
 }

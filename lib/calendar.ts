@@ -3,7 +3,7 @@ import { formatBudget } from "./format";
 
 /** evento de calendario del intercambio: .ics y link a google calendar */
 export interface CalendarEvent {
-  groupId: bigint;
+  groupId: string;
   name: string;
   eventAt: number; // unix seconds
   durationMinutes?: number;
@@ -55,7 +55,7 @@ export function buildIcs(e: CalendarEvent, now = new Date()): string {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:qmt-${e.groupId.toString()}@quienmetoco`,
+    `UID:qmt-${e.groupId}@quienmetoco`,
     `DTSTAMP:${icsDate(Math.floor(now.getTime() / 1000))}`,
     `DTSTART:${icsDate(start)}`,
     `DTEND:${icsDate(end)}`,

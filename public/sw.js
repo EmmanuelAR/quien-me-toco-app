@@ -2,7 +2,7 @@
    - precachea la pantalla offline y los íconos
    - navegación: red primero, si no hay señal, /offline
    - /_next/static e imágenes: caché primero (son inmutables o cambian poco)
-   - nunca cachea /api ni llamadas al rpc de starknet
+   - nunca cachea /api
 */
 const VERSION = "qmt-v4";
 const PRECACHE = `${VERSION}-precache`;

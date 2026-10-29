@@ -6,7 +6,7 @@ import { TextArea } from "./Field";
 import { Pill } from "./Pill";
 import { copy } from "@/lib/copy/es-CR";
 import { cn } from "@/lib/cn";
-import type { Wishlist } from "@/lib/contract/types";
+import type { Wishlist } from "@/lib/app/types";
 
 export interface WishlistCardProps {
   title: string;

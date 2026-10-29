@@ -19,7 +19,7 @@ export interface AppHeaderProps {
 /** barra con la flecha de volver y, debajo, el título grande de la pantalla */
 export function AppHeader({ title, eyebrow, subtitle, backHref, right, children, className }: AppHeaderProps) {
   return (
-    <header className={cn("safe-top pb-10", className)}>
+    <header className={cn("pb-10 pt-6", className)}>
       {(backHref || right) && (
         <div className="-mx-3 flex h-11 items-center justify-between gap-3">
           {backHref ? (
@@ -44,13 +44,29 @@ export function AppHeader({ title, eyebrow, subtitle, backHref, right, children,
   );
 }
 
+type PageWidth = "narrow" | "wide";
+
 /**
- * una sola columna, del ancho de un celular, centrada.
- * en el teléfono ocupa la pantalla; en la computadora queda al medio, con el mismo orden.
+ * narrow: formularios y flujos de una columna (sigue legible en desktop).
+ * wide: listados densos (dashboard, admin) que aprovechan el ancho.
  */
-export function Page({ children, className }: { children: ReactNode; className?: string }) {
+export function Page({
+  children,
+  className,
+  width = "narrow",
+}: {
+  children: ReactNode;
+  className?: string;
+  width?: PageWidth;
+}) {
   return (
-    <main className={cn("safe-x safe-bottom relative mx-auto flex w-full max-w-md flex-1 flex-col", className)}>
+    <main
+      className={cn(
+        "safe-x relative mx-auto flex w-full flex-1 flex-col",
+        width === "wide" ? "max-w-md lg:max-w-5xl lg:px-2" : "max-w-md lg:max-w-xl",
+        className,
+      )}
+    >
       {children}
     </main>
   );

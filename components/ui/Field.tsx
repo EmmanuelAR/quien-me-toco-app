@@ -92,6 +92,16 @@ const CURRENCY_SYMBOLS: Record<Currency, string> = {
   USD: "$",
 };
 
+const selectChevron =
+  'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%236e6e73\' d=\'M3 4l3 4 3-4H3z\'/%3E%3C/svg%3E")';
+
+/** sin w-full: el select de moneda no debe comerse el campo del monto */
+const currencySelectControl =
+  "h-14 shrink-0 rounded-sm border border-line-strong bg-white pl-3 pr-9 text-base text-ink " +
+  "appearance-none bg-no-repeat transition-[border-color,box-shadow] duration-fast " +
+  "focus:border-link focus:outline-none focus:ring-4 focus:ring-link/15 " +
+  "disabled:bg-surface disabled:text-ink-soft";
+
 interface CurrencyFieldProps extends BaseProps {
   value: string;
   currency: Currency;
@@ -119,15 +129,28 @@ export function CurrencyField({
 }: CurrencyFieldProps) {
   const auto = useId();
   const id = idProp ?? auto;
+  const currencyId = `${id}-currency`;
+  const symbol = CURRENCY_SYMBOLS[currency];
+
   return (
     <div className={cn("block", className)}>
-      <label htmlFor={id} className="mb-2 block text-sm font-medium text-ink">
-        {label}
-      </label>
+      <span className="mb-2 block text-sm font-medium text-ink">{label}</span>
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft">
-            {CURRENCY_SYMBOLS[currency]}
+        <select
+          id={currencyId}
+          value={currency}
+          onChange={(e) => onCurrencyChange(e.target.value as Currency)}
+          disabled={disabled}
+          className={currencySelectControl}
+          style={{ backgroundImage: selectChevron, backgroundPosition: "right 0.75rem center" }}
+          aria-label="Moneda"
+        >
+          <option value="CRC">₡ CRC</option>
+          <option value="USD">$ USD</option>
+        </select>
+        <div className="relative min-w-0 flex-1">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft" aria-hidden>
+            {symbol}
           </span>
           <input
             id={id}
@@ -138,22 +161,13 @@ export function CurrencyField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className={cn(fieldControl, "h-14 pl-8", error && invalid)}
+            placeholder="0"
+            className={cn(fieldControl, "h-14 pl-9", error && invalid)}
             aria-invalid={error ? true : undefined}
             aria-describedby={hint || error ? `${id}-hint` : undefined}
+            aria-label="Monto"
           />
         </div>
-        <select
-          value={currency}
-          onChange={(e) => onCurrencyChange(e.target.value as Currency)}
-          disabled={disabled}
-          className={cn(fieldControl, "h-14 w-24 appearance-none bg-right bg-no-repeat pr-8")}
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M3 4l3 4 3-4H3z'/%3E%3C/svg%3E")`, backgroundPosition: "right 0.75rem center" }}
-          aria-label="Moneda"
-        >
-          <option value="CRC">CRC</option>
-          <option value="USD">USD</option>
-        </select>
       </div>
       <Message id={`${id}-hint`} hint={hint} error={error} />
     </div>

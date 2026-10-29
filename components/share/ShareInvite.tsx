@@ -3,13 +3,11 @@
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { copy } from "@/lib/copy/es-CR";
-import { inviteCodeToSlug } from "@/lib/contract/calls";
 import { appUrl } from "@/lib/brand/links";
-import type { Group } from "@/lib/contract/types";
 import { formatDate } from "@/lib/format";
 
-export function inviteUrl(groupId: bigint, inviteCode: bigint): string {
-  return appUrl(`/i/${groupId.toString()}/${inviteCodeToSlug(inviteCode)}`);
+export function inviteUrl(token: string): string {
+  return appUrl(`/i/${encodeURIComponent(token)}`);
 }
 
 function WhatsAppIcon() {
@@ -20,11 +18,18 @@ function WhatsAppIcon() {
   );
 }
 
-/** compartir el link de invitación por whatsapp (con vista previa) o copiarlo */
-export function ShareInvite({ group, inviteCode }: { group: Group; inviteCode: bigint }) {
+export function ShareInvite({
+  name,
+  eventAt,
+  inviteToken,
+}: {
+  name: string;
+  eventAt: number;
+  inviteToken: string;
+}) {
   const toast = useToast();
-  const url = inviteUrl(group.id, inviteCode);
-  const text = `Te invito a «${group.name}», el amigo secreto del ${formatDate(group.eventAt)}. Apuntate aquí: ${url}`;
+  const url = inviteUrl(inviteToken);
+  const text = `Te invito a «${name}», el amigo secreto del ${formatDate(eventAt)}. Apuntate aquí: ${url}`;
   const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
   const share = async () => {
@@ -33,7 +38,7 @@ export function ShareInvite({ group, inviteCode }: { group: Group; inviteCode: b
         await navigator.share({ title: copy.app.name, text, url });
         return;
       } catch {
-        /* cancelado: seguimos a whatsapp */
+        /* cancelado */
       }
     }
     window.open(wa, "_blank", "noopener");

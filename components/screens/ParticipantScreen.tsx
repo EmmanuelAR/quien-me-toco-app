@@ -1,202 +1,181 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCavos } from "@cavos/kit/react";
-import { LoginSheet } from "@/components/cavos/LoginSheet";
-import { useWrite } from "@/components/cavos/useWrite";
+import { useSession } from "@/lib/auth/session";
+import { GoogleLoginButton } from "@/components/auth/GoogleLoginButton";
 import { useGroup } from "@/components/data/useGroup";
 import { RevealCard } from "@/components/draw/RevealCard";
-import { useSlip } from "@/components/draw/useSlip";
 import { AddToCalendar } from "@/components/share/AddToCalendar";
 import { AppHeader, Page } from "@/components/ui/AppHeader";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { buttonClass } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { WishlistCard } from "@/components/ui/WishlistCard";
-import { AlertIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { WishlistFillList } from "@/components/ui/WishlistFillList";
 import { GroupProgress, GroupSummary } from "./GroupSummary";
-import { calls } from "@/lib/contract/calls";
-import { readWishlist } from "@/lib/contract/reads";
-import { GroupStatus, emptyWishlist, type Wishlist } from "@/lib/contract/types";
+import { api } from "@/lib/api/client";
+import { emptyWishlist, type Wishlist } from "@/lib/app/types";
 import { copy } from "@/lib/copy/es-CR";
 
-export function ParticipantScreen({ groupId }: { groupId: bigint }) {
+export function ParticipantScreen({ groupId }: { groupId: string }) {
   const router = useRouter();
   const toast = useToast();
-  const { isAuthenticated, isLoading, address } = useCavos();
-  const { data, loading, notFound, error, refresh } = useGroup(groupId, { pollMs: 8_000 });
-  const { write, busy } = useWrite();
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [myWishlist, setMyWishlist] = useState<Wishlist | null>(null);
-  const [theirWishlist, setTheirWishlist] = useState<Wishlist | null>(null);
+  const { data: session, isPending: authPending } = useSession();
+  const isAuthenticated = Boolean(session?.user);
+  const { data: group, loading, notFound, error, refresh } = useGroup(groupId, { pollMs: 8_000 });
+  const [busy, setBusy] = useState(false);
+  const [assignment, setAssignment] = useState<{
+    receiver: { id: string; name: string; wishlist: Wishlist };
+  } | null>(null);
 
-  const group = data?.group ?? null;
-  const participants = useMemo(() => data?.participants ?? [], [data]);
-  const me = useMemo(
-    () => (address ? participants.find((p) => !p.isGhost && BigInt(p.account) === BigInt(address)) ?? null : null),
-    [participants, address],
-  );
-  const isAdmin = Boolean(group && address && BigInt(group.admin) === BigInt(address));
-  const { state: slip, moveHere, retry } = useSlip(group, me, address);
-
-  // revelado: todos a la cadena
   useEffect(() => {
-    if (group?.status === GroupStatus.Revealed) router.replace(`/g/${groupId.toString()}/revelacion`);
+    if (group?.status === "revealed") router.replace(`/g/${groupId}/revelacion`);
   }, [group?.status, groupId, router]);
 
   useEffect(() => {
-    if (!me) return;
-    void readWishlist(groupId, me.index).then(setMyWishlist);
-  }, [groupId, me]);
+    if (!group || (group.status !== "drawn" && group.status !== "revealed")) {
+      setAssignment(null);
+      return;
+    }
+    if (!group.myMemberId) return;
+    void api<{ receiver: { id: string; name: string; wishlist: Wishlist } }>(
+      `/api/groups/${groupId}/my-assignment`,
+    )
+      .then((r) => setAssignment({ receiver: r.receiver }))
+      .catch(() => setAssignment(null));
+  }, [group, groupId]);
 
-  const receiverIndex = slip.kind === "ready" ? slip.receiver : null;
-  useEffect(() => {
-    if (receiverIndex === null) return;
-    const load = () => void readWishlist(groupId, receiverIndex).then(setTheirWishlist);
-    load();
-    const t = window.setInterval(load, 15_000);
-    return () => window.clearInterval(t);
-  }, [groupId, receiverIndex]);
+  const me = group?.members.find((m) => m.id === group.myMemberId) ?? null;
+  const myWishlist = me?.wishlist ?? emptyWishlist;
+  const wishlistRows =
+    group?.members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      filled: Boolean(m.wishlist.ideas.trim() || m.wishlist.sizes.trim() || m.wishlist.links.trim()),
+    })) ?? [];
 
   const saveMine = async (next: Wishlist) => {
     if (!me) return;
+    setBusy(true);
     try {
-      await write(calls.updateWishlist(groupId, me.index, next));
-      setMyWishlist(next);
+      await api(`/api/members/${me.id}/wishlist`, {
+        method: "PATCH",
+        body: JSON.stringify(next),
+      });
+      await refresh();
       toast.show(copy.wishlist.saved, "ok");
     } catch {
       toast.show(copy.common.error, "error");
+    } finally {
+      setBusy(false);
     }
   };
 
-  if (loading && !data) {
+  if (authPending || (loading && !group)) {
     return (
       <Page className="items-center justify-center">
         <Spinner className="size-8 text-ink-soft" />
       </Page>
     );
   }
-  if (notFound || !group) {
+
+  if (!isAuthenticated) {
     return (
       <Page>
         <AppHeader backHref="/" />
-        <p className="text-xl font-semibold text-balance">{error ? copy.common.error : copy.common.notFound}</p>
+        <p className="mb-6 text-pretty text-ink-soft">{copy.auth.needLogin}</p>
+        <GoogleLoginButton callbackURL={`/g/${groupId}`} />
       </Page>
     );
   }
 
-  if (group.archived && !isAdmin) {
+  if (notFound || !group) {
     return (
       <Page>
-        <AppHeader backHref="/" title={group.name} right={<Pill>{copy.status.archived}</Pill>} />
+        <AppHeader backHref="/dashboard" />
+        <p className="text-xl font-semibold">{error ? copy.common.error : copy.common.notFound}</p>
+      </Page>
+    );
+  }
+
+  if (group.archived && !group.isOwner) {
+    return (
+      <Page>
+        <AppHeader backHref="/dashboard" title={group.name} right={<Pill>{copy.status.archived}</Pill>} />
         <p className="text-lg text-pretty text-ink-soft">{copy.admin.archived}</p>
       </Page>
     );
   }
 
-  const missing = Math.max(group.expectedCount - group.participantCount, 0);
-  const receiver = receiverIndex !== null ? participants[receiverIndex] : null;
+  if (!group.myMemberId) {
+    return (
+      <Page>
+        <AppHeader backHref="/dashboard" title={group.name} />
+        <p className="text-pretty text-ink-soft">{copy.participant.notInGroup}</p>
+      </Page>
+    );
+  }
 
   return (
     <Page>
-      <AppHeader backHref="/" title={group.name}>
-        <GroupProgress status={group.status} />
-      </AppHeader>
-
-      {!isAuthenticated ? (
-        <div className="space-y-8 pb-12">
-          <GroupSummary group={group} />
-          <Button size="lg" fullWidth loading={isLoading} onClick={() => setLoginOpen(true)}>
-            {copy.auth.enter}
-          </Button>
-        </div>
-      ) : !me ? (
-        <div className="space-y-8 pb-12">
-          <p className="text-xl font-semibold">{copy.participant.notInGroup}</p>
-          <GroupSummary group={group} />
-          {isAdmin && (
-            <Link href={`/g/${groupId.toString()}/admin`} className={buttonClass({ size: "lg", fullWidth: true })}>
+      <AppHeader
+        backHref="/dashboard"
+        title={group.name}
+        right={
+          group.isOwner ? (
+            <Link href={`/g/${groupId}/admin`} className="text-sm font-medium text-ink-soft">
               {copy.admin.title}
             </Link>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-12 pb-12">
-          {group.status < GroupStatus.Drawn && (
-            <section className="space-y-1">
-              <p className="text-lg text-pretty">
-                {group.status === GroupStatus.DrawRequested ? copy.participant.drawing : copy.participant.waiting}
-              </p>
-              {missing > 0 && group.status === GroupStatus.Open && <p className="text-ink-soft">{copy.participant.missing(missing)}</p>}
-            </section>
-          )}
+          ) : undefined
+        }
+      />
 
-          {group.status >= GroupStatus.Drawn && (
-            <>
-              {slip.kind === "loading" ? (
-                <div className="flex items-center gap-2 text-ink-soft">
-                  <Spinner className="size-4" /> {copy.common.loading}
-                </div>
-              ) : slip.kind === "ready" && receiver ? (
-                <RevealCard receiverName={receiver.name} sealedOk={slip.sealedOk} storageKey={`qmt:revealed:${groupId}:${me.index}`} />
-              ) : slip.kind === "no-key" ? (
-                <section className="space-y-5 rounded-md bg-surface p-6">
-                  <p className="text-lg text-pretty">{copy.participant.noKeyYet}</p>
-                  <Button size="lg" fullWidth onClick={() => void moveHere()} loading={busy}>
-                    {copy.participant.moveKey}
-                  </Button>
-                </section>
-              ) : slip.kind === "moving" ? (
-                <section className="flex items-start gap-3 rounded-md bg-surface p-6">
-                  <Spinner className="mt-0.5 text-ink-soft" />
-                  <div>
-                    <p>{copy.participant.movingKey}</p>
-                    <p className="mt-1 text-sm text-ink-soft">{copy.participant.movingKeyHint}</p>
-                  </div>
-                </section>
-              ) : slip.kind === "error" ? (
-                <section className="space-y-5 rounded-md bg-surface p-6">
-                  <p className="flex items-start gap-2">
-                    <AlertIcon className="mt-0.5" />
-                    {copy.common.error}
-                  </p>
-                  <Button variant="secondary" onClick={() => void retry()}>
-                    {copy.pwa.retry}
-                  </Button>
-                </section>
-              ) : null}
+      <div className="flex flex-col gap-10 pb-16">
+        <GroupProgress status={group.status} />
+        <GroupSummary group={group} />
 
-              {receiver && theirWishlist && (
-                <WishlistCard title={copy.wishlist.theirs(receiver.name)} wishlist={theirWishlist} live />
-              )}
-            </>
-          )}
+        <AddToCalendar
+          groupId={group.id}
+          name={group.name}
+          eventAt={group.eventAt}
+          place={group.place}
+          budgetMin={group.budgetMin}
+          budgetMax={group.budgetMax}
+          currency={group.currency}
+        />
 
-          <WishlistCard title={copy.wishlist.mine} wishlist={myWishlist ?? emptyWishlist} editable saving={busy} onSave={saveMine} />
+        <WishlistCard
+          title={copy.wishlist.mine}
+          wishlist={myWishlist}
+          editable={group.status !== "revealed"}
+          saving={busy}
+          onSave={saveMine}
+        />
 
+        <WishlistFillList rows={wishlistRows} />
+
+        {assignment && (
           <section className="space-y-4">
-            <GroupSummary group={group} />
-            <AddToCalendar group={group} />
+            <RevealCard
+              receiverName={assignment.receiver.name}
+              sealedOk
+              storageKey={`qmt:slip:${groupId}:${group.myMemberId}`}
+            />
+            <WishlistCard
+              title={copy.wishlist.theirs(assignment.receiver.name)}
+              wishlist={assignment.receiver.wishlist}
+              live
+            />
           </section>
+        )}
 
-          <div className="flex flex-col items-center gap-2">
-            {isAdmin && (
-              <Link href={`/g/${groupId.toString()}/admin`} className="link flex items-center gap-1 py-2">
-                {copy.admin.title}
-                <ChevronRightIcon className="size-4" />
-              </Link>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
-              {copy.common.refresh}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <LoginSheet open={loginOpen} onClose={() => setLoginOpen(false)} />
+        {group.status === "open" && !assignment && (
+          <p className="text-pretty text-ink-soft">{copy.participant.waiting}</p>
+        )}
+      </div>
     </Page>
   );
 }

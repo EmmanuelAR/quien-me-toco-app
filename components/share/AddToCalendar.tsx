@@ -6,7 +6,6 @@ import { Sheet } from "@/components/ui/Sheet";
 import { copy } from "@/lib/copy/es-CR";
 import { googleCalendarUrl } from "@/lib/calendar";
 import { appUrl } from "@/lib/brand/links";
-import type { Group } from "@/lib/contract/types";
 
 function CalendarIcon() {
   return (
@@ -17,18 +16,35 @@ function CalendarIcon() {
   );
 }
 
-/** "agregar al calendario": .ics (apple y otros) o google calendar */
-export function AddToCalendar({ group, variant = "secondary" }: { group: Group; variant?: "secondary" | "ghost" }) {
+export function AddToCalendar({
+  groupId,
+  name,
+  eventAt,
+  place,
+  budgetMin = 0,
+  budgetMax = 0,
+  currency = "CRC",
+  variant = "secondary",
+}: {
+  groupId: string;
+  name: string;
+  eventAt: number;
+  place: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  currency?: string;
+  variant?: "secondary" | "ghost";
+}) {
   const [open, setOpen] = useState(false);
   const event = {
-    groupId: group.id,
-    name: group.name,
-    eventAt: group.eventAt,
-    place: group.place,
-    budgetMin: group.budgetMin,
-    budgetMax: group.budgetMax,
-    currency: group.currency || "CRC",
-    url: appUrl(`/g/${group.id.toString()}`),
+    groupId,
+    name,
+    eventAt,
+    place,
+    budgetMin,
+    budgetMax,
+    currency,
+    url: appUrl(`/g/${groupId}`),
   };
   return (
     <>
@@ -38,18 +54,18 @@ export function AddToCalendar({ group, variant = "secondary" }: { group: Group; 
       <Sheet open={open} onClose={() => setOpen(false)} title={copy.calendar.add}>
         <div className="space-y-3 pb-2">
           <a
-            href={googleCalendarUrl(event)}
-            target="_blank"
-            rel="noreferrer noopener"
-            className={buttonClass({ size: "lg", fullWidth: true })}
-          >
-            {copy.calendar.google}
-          </a>
-          <a
-            href={`/g/${group.id.toString()}/calendario.ics`}
             className={buttonClass({ variant: "secondary", size: "lg", fullWidth: true })}
+            href={`/g/${groupId}/calendario.ics`}
           >
             {copy.calendar.ics}
+          </a>
+          <a
+            className={buttonClass({ variant: "secondary", size: "lg", fullWidth: true })}
+            href={googleCalendarUrl(event)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {copy.calendar.google}
           </a>
         </div>
       </Sheet>

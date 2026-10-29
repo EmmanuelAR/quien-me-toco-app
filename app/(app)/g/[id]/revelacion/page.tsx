@@ -1,12 +1,10 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { FinalRevealScreen } from "@/components/screens/FinalRevealScreen";
-import { copy } from "@/lib/copy/es-CR";
+import { notFound } from "next/navigation";
 
-export const metadata: Metadata = { title: copy.finalReveal.sub };
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function RevealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!/^\d+$/.test(id)) notFound();
-  return <FinalRevealScreen groupId={BigInt(id)} />;
+  if (!UUID_RE.test(id)) notFound();
+  return <FinalRevealScreen groupId={id} />;
 }
